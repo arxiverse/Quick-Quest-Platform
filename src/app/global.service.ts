@@ -1,0 +1,1 @@
+// Global Service = Kumpulan Endpoint API yang akan didistribusikan ke seluruh aplikasi (Middleware)

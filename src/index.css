@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+@plugin "daisyui";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@plugin "daisyui/theme" {
+    name: "Neiravoid";
+    default: true;
+    prefers-color-scheme: dark;
+    color-scheme: dark;
+
+    /* Base Colors - Dark */
+    --color-base-100: oklch(0 0 none);
+    --color-base-200: oklch(0.21 0.019 309.83);
+    --color-base-300: oklch(0.24 0.0419 307.54);
+    --color-base-content: oklch(1 0 none);
+
+    /* Primary Colors - Dark */
+    --color-primary: oklch(1 0 none);
+    --color-primary-content: oklch(0 0 none);
+
+    /* Secondary Colors - Dark */
+    --color-secondary: oklch(70% 0.25 200);
+    --color-secondary-content: oklch(15% 0.03 200);
+
+    /* Accent Colors - Dark */
+    --color-accent: oklch(65% 0.25 160);
+    --color-accent-content: oklch(15% 0.03 160);
+
+    /* Neutral Colors - Dark */
+    --color-neutral: oklch(0.5 0 none);
+    --color-neutral-content: oklch(98% 0.01 240);
+
+    /* Status Colors - Dark */
+    --color-info: oklch(70% 0.2 220);
+    --color-info-content: oklch(15% 0.03 220);
+    --color-success: oklch(65% 0.25 140);
+    --color-success-content: oklch(15% 0.03 140);
+    --color-warning: oklch(80% 0.25 80);
+    --color-warning-content: oklch(20% 0.05 80);
+    --color-error: oklch(65% 0.3 30);
+    --color-error-content: oklch(98% 0.01 30);
+    /* Design Tokens */
+    /* --radius-selector: 1rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+
+    --border: 1px;
+
+    --depth: 1;
+    --noise: 0; */
+}
+
+@plugin "daisyui/theme" {
+    name: "Neiralight";
+    default: false;
+    prefers-color-scheme: light;
+    color-scheme: light;
+
+    /* Base Colors - Light */
+    --color-base-100: oklch(1 0 none);
+    --color-base-200: oklch(95% 0.03 240);
+    --color-base-300: oklch(92% 0.04 240);
+    --color-base-content: oklch(20% 0.05 240);
+
+    /* Primary Colors - Light */
+    --color-primary: oklch(0 0 none);
+    --color-primary-content: oklch(1 0 none);
+
+    /* Secondary Colors - Light */
+    --color-secondary: oklch(65% 0.25 200);
+    --color-secondary-content: oklch(20% 0.05 200);
+
+    /* Accent Colors - Light */
+    --color-accent: oklch(60% 0.25 160);
+    --color-accent-content: oklch(20% 0.05 160);
+
+    /* Neutral Colors - Light */
+    --color-neutral: oklch(0.5 0 none);
+    --color-neutral-content: oklch(20% 0.05 240);
+
+    /* Status Colors - Light */
+    --color-info: oklch(55% 0.2 220);
+    --color-info-content: oklch(20% 0.05 220);
+    --color-success: oklch(55% 0.25 140);
+    --color-success-content: oklch(20% 0.05 140);
+    --color-warning: oklch(70% 0.25 80);
+    --color-warning-content: oklch(20% 0.05 80);
+    --color-error: oklch(55% 0.3 30);
+    --color-error-content: oklch(98% 0.01 30);
+
+    /* Design Tokens */
+    /* --radius-selector: 1rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+
+    --border: 1px;
+
+    --depth: 1;
+    --noise: 0; */
+}
+
+
+@font-face {
+    font-family: 'Quicksand';
+    src: url('./assets/font/Quicksand-Bold.ttf');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Quicksand';
+    src: url('./assets/font/Quicksand-SemiBold.ttf');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Quicksand';
+    src: url('./assets/font/Quicksand-Medium.ttf');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Quicksand';
+    src: url('./assets/font/Quicksand-Regular.ttf');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@theme {
+    --font-sans: 'Quicksand', sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.theme-bg {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* ORB LAYER */
+.theme-bg::before,
+.theme-bg::after {
+  content: "";
+  position: absolute;
+  width: 2687px;
+  height: 2687px;
+  pointer-events: none;
+  filter: blur(200px);
+  z-index: -1;
+}
+
+.theme-bg::before {
+  left: -1344px;
+  top: 559px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(157, 0, 255, 0.226) 5%,
+      rgba(0, 26, 255, 0.192) 100%
+    );
+}
+
+.theme-bg::after {
+  left: 384px;
+  top: -2128px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 26, 255, 0.192) 100%
+      rgba(157, 0, 255, 0.226) 5%,     
+    );
+
+  transform: rotate(180deg);
+}

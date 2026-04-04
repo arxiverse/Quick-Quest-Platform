@@ -1,0 +1,775 @@
+<RelativeLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/login_deskt"
+android:layout_width="1728dp"
+android:layout_height="1117dp"
+android:clipToOutline="true"
+android:background="#FFFFFF"
+ />
+
+============================
+
+/* Login Desktop - Light */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: relative;
+width: 1728px;
+height: 1117px;
+
+background: #FFFFFF;
+
+
+/* .container-fluid */
+
+width: 1728px;
+height: 1117px;
+
+background: url(background-image.png);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* .container-sm */
+
+position: absolute;
+width: 406px;
+height: 816px;
+left: calc(50% - 406px/2);
+top: calc(50% - 816px/2 + 0.5px);
+
+background: rgba(0, 0, 0, 0.004);
+box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.3), inset 0px 3px 2px rgba(255, 255, 255, 0.3);
+border-radius: 28px;
+
+
+/* .container-sm */
+
+position: absolute;
+width: 406px;
+height: 76px;
+left: 0px;
+top: 740px;
+
+border-radius: 10px;
+
+
+/* Belum punya akun? Registrasi */
+
+position: absolute;
+width: 187px;
+height: 16px;
+left: 109px;
+top: 0px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+
+color: #000000;
+
+
+
+/* .container-sm */
+
+position: absolute;
+width: 406px;
+height: 244px;
+left: 0px;
+top: 496px;
+
+
+
+/* Google */
+
+position: absolute;
+width: 48px;
+height: 16px;
+left: 82px;
+top: 107px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 700;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+text-align: center;
+
+color: #000000;
+
+
+
+/* HP */
+
+position: absolute;
+width: 48px;
+height: 16px;
+left: calc(50% - 48px/2);
+top: 107px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 700;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+text-align: center;
+
+color: #000000;
+
+
+
+/* Linked In */
+
+position: absolute;
+width: 56px;
+height: 16px;
+left: 278px;
+top: 107px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 700;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+text-align: center;
+
+color: #000000;
+
+
+
+/* Lanjutkan Menggunakan */
+
+position: absolute;
+width: 406px;
+height: 17px;
+left: 0px;
+top: 16px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 700;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+text-align: center;
+
+color: #000000;
+
+
+
+/* Google */
+
+position: absolute;
+height: 50px;
+left: 19.95%;
+right: 67.73%;
+top: calc(50% - 50px/2 - 42px);
+
+
+
+/* Google */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+
+
+/* back */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #FFFFFF;
+
+
+/* super-g */
+
+position: absolute;
+left: 28.33%;
+right: 28.33%;
+top: 28.33%;
+bottom: 28.33%;
+
+
+
+/* Shape */
+
+position: absolute;
+left: 30.64%;
+right: 35.51%;
+top: 28.33%;
+bottom: 54.29%;
+
+background: #EA4335;
+
+
+/* Shape */
+
+position: absolute;
+left: 50%;
+right: 29.2%;
+top: 46.05%;
+bottom: 33.58%;
+
+background: #4285F4;
+
+
+/* Shape */
+
+position: absolute;
+left: 28.33%;
+right: 62.33%;
+top: 40.27%;
+bottom: 40.27%;
+
+background: #FBBC05;
+
+
+/* Shape */
+
+position: absolute;
+left: 30.67%;
+right: 35.65%;
+top: 54.29%;
+bottom: 28.33%;
+
+background: #34A853;
+
+
+/* Shape */
+
+position: absolute;
+left: 28.33%;
+right: 28.33%;
+top: 28.33%;
+bottom: 28.33%;
+
+
+
+/* LinkedIN */
+
+position: absolute;
+height: 50px;
+left: 69.21%;
+right: 18.47%;
+top: calc(50% - 50px/2 - 42px);
+
+
+
+/* LinkedIN */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+
+
+/* back */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #0077B5;
+
+
+/* Shape */
+
+position: absolute;
+left: 23.33%;
+right: 23.8%;
+top: 25%;
+bottom: 24.54%;
+
+background: #FFFFFF;
+
+
+/* Shape-path */
+
+position: absolute;
+left: 24%;
+right: 64.67%;
+top: 41.41%;
+bottom: 24.54%;
+
+background: #DADADA;
+
+
+/* Shape-path */
+
+position: absolute;
+left: 23.33%;
+right: 63.92%;
+top: 25%;
+bottom: 63.23%;
+
+background: #DADADA;
+
+
+/* Shape-path */
+
+position: absolute;
+left: 41.61%;
+right: 23.8%;
+top: 40.61%;
+bottom: 24.54%;
+
+background: #DADADA;
+
+
+/* WhatsApp */
+
+position: absolute;
+width: 50px;
+height: 50px;
+left: calc(50% - 50px/2);
+top: calc(50% - 50px/2 - 42px);
+
+
+
+/* WhatsApp */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+
+
+/* Oval */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #25D366;
+
+
+/* Page-1 */
+
+position: absolute;
+left: 21.67%;
+right: 18.62%;
+top: 18.33%;
+bottom: 21.67%;
+
+background: #FDFDFD;
+
+
+/* Page-1-path */
+
+position: absolute;
+left: 21.67%;
+right: 18.62%;
+top: 18.33%;
+bottom: 21.67%;
+
+background: #DADADA;
+
+
+/* Page-1-path */
+
+position: absolute;
+left: 26.94%;
+right: 23.64%;
+top: 23.36%;
+bottom: 27.2%;
+
+background: #DADADA;
+
+
+/* Page-1-path */
+
+position: absolute;
+left: 36.54%;
+right: 33.27%;
+top: 34.33%;
+bottom: 37.64%;
+
+background: #DADADA;
+
+
+/* .container-sm */
+
+position: absolute;
+width: 406px;
+height: 350px;
+left: calc(50% - 406px/2);
+top: 146px;
+
+
+
+/* Username / Email */
+
+position: absolute;
+width: 112px;
+height: 16px;
+left: 27px;
+top: 77px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+
+color: #000000;
+
+
+
+/* Password */
+
+position: absolute;
+width: 112px;
+height: 16px;
+left: 27px;
+top: 170px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+
+color: #000000;
+
+
+
+/* Lupa Password? */
+
+position: absolute;
+width: 112px;
+height: 16px;
+left: 265px;
+top: 261px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+
+color: #006FFF;
+
+
+
+/* Simpan Informasi */
+
+position: absolute;
+width: 211px;
+height: 16px;
+left: 54px;
+top: 262px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 150%;
+/* or 18px */
+display: flex;
+align-items: center;
+
+color: #000000;
+
+
+
+/* Login Button */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+width: 350px;
+height: 40px;
+left: calc(50% - 350px/2 - 1px);
+top: calc(50% - 40px/2 + 155px);
+
+border-radius: 10px;
+
+
+/* Button/Primitive/Default */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 4px 0px;
+
+width: 350px;
+height: 38px;
+
+background: #FFFFFF;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Button */
+
+margin: 0 auto;
+width: 54px;
+height: 30px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 150%;
+/* identical to box height, or 30px */
+display: flex;
+align-items: center;
+text-align: center;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Remember */
+
+position: absolute;
+width: 16px;
+height: 16px;
+left: 27px;
+top: 262px;
+
+background: #FFFFFF;
+border-radius: 4px;
+
+
+/* Unchecked */
+
+box-sizing: border-box;
+
+position: absolute;
+visibility: hidden;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #000000;
+/* gray/400 */
+border: 1px solid #A1A1AA;
+border-radius: 4px;
+
+
+/* Checked */
+
+box-sizing: border-box;
+
+position: absolute;
+visibility: hidden;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #000000;
+/* white */
+border: 1px solid #FFFFFF;
+border-radius: 4px;
+
+
+/* Circle */
+
+position: absolute;
+visibility: hidden;
+left: 6px;
+right: 6px;
+top: 6px;
+bottom: 6px;
+
+/* white */
+background: #FFFFFF;
+transform: rotate(180deg);
+
+
+/* Vector */
+
+position: absolute;
+left: 4px;
+right: 4.02px;
+top: 5px;
+bottom: 5.01px;
+
+background: #000000;
+
+
+/* Password Input */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 350px;
+height: 43px;
+left: 27px;
+top: 195px;
+
+background: rgba(0, 0, 0, 0.004);
+border: 0.5px solid #EEEEEE;
+box-shadow: inset 0px 2px 2px rgba(0, 0, 0, 0.3);
+border-radius: 10px;
+
+
+/* Select */
+
+position: absolute;
+visibility: hidden;
+width: 276px;
+height: 19px;
+right: 12px;
+top: calc(50% - 19px/2);
+
+
+
+/* Input */
+
+position: absolute;
+visibility: hidden;
+width: 276px;
+height: 19px;
+left: 12px;
+top: calc(50% - 19px/2);
+
+opacity: 0;
+
+
+/* Username Input */
+
+position: absolute;
+width: 350px;
+height: 43px;
+left: 27px;
+top: 102px;
+
+background: rgba(0, 0, 0, 0.004);
+border: 0.5px solid #E8E8E8;
+box-shadow: inset 0px 2px 2px rgba(0, 0, 0, 0.3);
+border-radius: 10px;
+
+
+/* Select */
+
+position: absolute;
+visibility: hidden;
+width: 276px;
+height: 19px;
+right: 12px;
+top: calc(50% - 19px/2);
+
+
+
+/* Input */
+
+position: absolute;
+visibility: hidden;
+width: 276px;
+height: 19px;
+left: 12px;
+top: calc(50% - 19px/2);
+
+background: #000000;
+
+
+/* .container-sm */
+
+position: absolute;
+width: 406px;
+height: 146px;
+left: 0px;
+top: 0px;
+
+
+
+/* QQM-Logo */
+
+position: absolute;
+width: 100px;
+height: 100px;
+left: calc(50% - 100px/2);
+top: 9px;
+
+background: url(QQMLogo.png);
+
+
+/* Login */
+
+position: absolute;
+width: 100px;
+height: 37px;
+left: 153px;
+top: 109px;
+
+font-family: 'Quicksand';
+font-style: normal;
+font-weight: 700;
+font-size: 32px;
+line-height: 150%;
+/* or 48px */
+display: flex;
+align-items: center;
+text-align: center;
+
+color: #000000;
