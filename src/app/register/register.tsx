@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { SwitchTheme } from "../global.theme";
 import Logo from "../../assets/Figma/QQMLogo.png";
 import BorderGlow from "../../Animation/BorderGlow";
@@ -6,7 +6,7 @@ import { registerFields, registerSocialItems, type AuthSocialItem } from "./regi
 
 function SocialButton({ icon, label, className = "" }: AuthSocialItem) {
   return (
-    <div className="auth-social-item">
+    <div className="auth-social-item min-w-0">
       <button type="button" aria-label={label} className={`btn btn-circle h-12 min-h-12 w-12 border-base-300 bg-base-100 shadow-none hover:bg-base-200 ${className}`}>
         <img src={icon} className="h-5 w-5" alt={label} />
       </button>
@@ -17,10 +17,10 @@ function SocialButton({ icon, label, className = "" }: AuthSocialItem) {
 
 const RegisterForm = () => {
   return (
-    <div className="auth-card w-full p-8 sm:p-10">
+    <div className="auth-card w-full max-w-full p-6 sm:p-10">
       <div className="mb-8 flex flex-col items-center text-center">
         <div className="auth-logo-shell mb-4">
-          <img src={Logo} alt="QQM Logo" className="size-[100px] object-contain" />
+          <img src={Logo} alt="QQM Logo" className="size-[92px] object-contain sm:size-[100px]" />
         </div>
         <h1 className="auth-section-title text-base-content">Register</h1>
       </div>
@@ -46,7 +46,7 @@ const RegisterForm = () => {
       <div className="mt-12 text-center">
         <div className="text-xs font-bold text-base-content/85">Atau menggunakan</div>
 
-        <div className="mt-6 flex justify-center gap-8">
+        <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-4 sm:gap-8">
           {registerSocialItems.map((item) => (
             <SocialButton key={item.label} {...item} />
           ))}
@@ -65,14 +65,14 @@ const RegisterForm = () => {
 
 function RegisterComponent() {
   return (
-    <div className="min-h-screen bg-base-100 px-4 py-4 font-sans text-base-content">
-      <div className="mx-auto flex max-w-5xl justify-end">
+    <div className="min-h-screen w-full overflow-x-hidden bg-base-100 px-3 py-4 font-sans text-base-content sm:px-4">
+      <div className="mx-auto flex w-full max-w-5xl justify-end">
         <SwitchTheme />
       </div>
 
-      <div className="auth-stage mx-auto flex max-w-5xl items-center justify-center">
+      <div className="auth-stage mx-auto flex w-full max-w-5xl items-center justify-center overflow-x-hidden">
         <BorderGlow
-          className="w-full max-w-[406px]"
+          className="w-full max-w-[406px] overflow-hidden"
           edgeSensitivity={30}
           coneSpread={14}
           glowColor="270 95 70"

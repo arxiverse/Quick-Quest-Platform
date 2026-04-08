@@ -1,4 +1,5 @@
-﻿import type { ReactNode } from "react";
+﻿import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
 import { cn, Surface } from "../../home.ui";
 import type { ProfileProps, ProfileQuestItem, ProfileStatItem } from "./profile";
@@ -217,9 +218,14 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
                 <ProfileIdentityRow icon={<LocationIdentityIcon />}>{profile.address}</ProfileIdentityRow>
               </div>
             </div>
-            <button type="button" className="btn h-10 min-h-10 rounded-[12px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base">
-              Ubah
-            </button>
+            <div className="flex shrink-0 flex-col gap-2">
+              <button type="button" className="btn h-10 min-h-10 rounded-[12px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base">
+                Ubah
+              </button>
+              <Link to="/login" className="btn h-10 min-h-10 rounded-[12px] border-none bg-error px-5 text-sm text-error-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base">
+                Logout
+              </Link>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

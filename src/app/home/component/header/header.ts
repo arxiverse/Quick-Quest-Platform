@@ -4,4 +4,5 @@ export type HeaderProps = {
   meta: HomeViewMeta;
   profile: HomeProfile;
   onProfileOpen?: () => void;
+  variant?: "full" | "toolbar";
 };

@@ -21,3 +21,10 @@ login/
 ```
 
 3. Styling Menggunakan UI Tailwind CSS secara penuh
+
+Cara kerja dari Struktur Shell QQM ini adalah: Semua Komponen .tsx didalam direktori app adalah html sebagai gantinya html pada Angular, kita menggunakan kedua pendekatan yaitu ".tsx as html and component logic" dan ".ts as data logic to .tsx and service connector"
+
+Jadi alih alih kita gunakan .ts sebagai service lebih baik bikin service.ts yang dikoneksikan melalui data logic dengan alur berikut:
+```
+component.tsx --> component.ts --> component.service.ts --> global.service.ts
+```

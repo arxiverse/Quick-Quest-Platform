@@ -6,6 +6,7 @@
   "leaderboard",
   "chat",
   "giver",
+  "element",
   "profile",
 ] as const;
 
@@ -25,6 +26,7 @@ export type HomeIconKey =
   | "switch"
   | "logout"
   | "user"
+  | "element"
   | "search"
   | "filter"
   | "chevronDown"

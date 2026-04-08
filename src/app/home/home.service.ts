@@ -55,6 +55,12 @@ export const homeViewMetaMap: Record<HomeView, HomeViewMeta> = {
     description: "Area buat ngerapihin brief, budget, prioritas, dan distribusi request ke runner.",
     searchPlaceholder: "Cari campaign atau brief",
   },
+  element: {
+    eyebrow: "Element",
+    title: "Playground UI yang padat, rapi, dan siap dipinjam ke halaman lain.",
+    description: "Tempat kita nampung elemen dashboard ala TailAdmin dan density ala AdminOne sebelum disebar ke fitur utama.",
+    searchPlaceholder: "Cari component, chart, atau pattern UI",
+  },
   profile: {
     eyebrow: "Profil",
     title: "Ringkasan akun, performa, dan quest dari satu tempat.",
@@ -71,21 +77,25 @@ export const desktopNavItems: HomeNavItem[] = [
   { key: "leaderboard", label: "Leaderboard", iconKey: "leaderboard", view: "leaderboard" },
   { key: "chat", label: "Chat", iconKey: "chat", view: "chat" },
   { key: "giver", label: "Giver", iconKey: "switch", view: "giver" },
+  { key: "element", label: "Element", iconKey: "element", view: "element" },
 ];
 
 export const mobileNavItems: HomeNavItem[] = [
   { key: "dashboard", label: "Dashboard", mobileLabel: "Home", iconKey: "home", view: "dashboard" },
   { key: "analysis", label: "Analisis", iconKey: "analysis", view: "analysis" },
-  { key: "runner", label: "Runner", iconKey: "briefcase", view: "runner" },
+  { key: "giver", label: "Giver", iconKey: "switch", view: "giver" },
   { key: "recent", label: "Riwayat", iconKey: "history", view: "recent" },
   { key: "chat", label: "Chat", iconKey: "chat", view: "chat" },
-  { key: "giver", label: "Giver", iconKey: "switch", view: "giver" },
 ];
 
-export const homeActionItems: HomeNavItem[] = [
-  { key: "profile", label: "Profile", iconKey: "user", view: "profile" },
-  { key: "logout", label: "Logout", iconKey: "logout", tone: "danger", to: "/login" },
+export const mobileShortcutItems: HomeNavItem[] = [
+  { key: "runner", label: "Runner", iconKey: "briefcase", view: "runner" },
+  { key: "leaderboard", label: "Leaderboard", iconKey: "leaderboard", view: "leaderboard" },
+  { key: "element", label: "Element", iconKey: "element", view: "element" },
+  { key: "profile-shortcut", label: "Profile", iconKey: "user", view: "profile" },
 ];
+
+export const homeActionItems: HomeNavItem[] = [{ key: "profile", label: "Profile", iconKey: "user", view: "profile" }];
 
 export const homeNotifications: HomeNotification[] = [
   {

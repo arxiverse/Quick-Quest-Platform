@@ -4,7 +4,27 @@ import { Surface } from "../../home.ui";
 import type { HeaderProps } from "./header";
 import ProfileComponent from "../profile/profile.tsx";
 
-function HeaderComponent({ meta, profile, onProfileOpen }: HeaderProps) {
+function HeaderComponent({ meta, profile, onProfileOpen, variant = "full" }: HeaderProps) {
+  if (variant === "toolbar") {
+    return (
+      <Surface className="p-3 sm:p-4">
+        <div className="flex items-center gap-2">
+          <label className="input input-bordered flex h-12 w-full items-center gap-3 rounded-[12px] border-base-300 bg-base-100 px-4 text-base-content shadow-none transition-colors focus-within:border-primary/40 sm:h-[61px]">
+            <SearchIcon className="size-5 text-base-content/50 sm:size-6" />
+            <input
+              type="text"
+              placeholder={meta.searchPlaceholder}
+              className="grow text-sm font-semibold text-base-content placeholder:text-base-content/50 sm:text-lg"
+            />
+          </label>
+          <div className="shrink-0">
+            <SwitchTheme />
+          </div>
+        </div>
+      </Surface>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Surface className="overflow-hidden p-4 sm:p-5">

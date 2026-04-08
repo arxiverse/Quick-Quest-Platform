@@ -9,4 +9,8 @@ export default defineConfig({
     tailwindcss(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  server: {
+    allowedHosts: ['neiraverse.com'],
+  }
+  
 })

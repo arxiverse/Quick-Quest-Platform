@@ -12,7 +12,7 @@ function NotificationComponent({ notifications, profile, onProfileOpen, classNam
         </button>
       )}
 
-      <Surface className="p-4 sm:p-5">
+      <Surface className="flex h-full min-h-0 flex-col p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-base-content/45">Pusat Update</p>
@@ -21,7 +21,7 @@ function NotificationComponent({ notifications, profile, onProfileOpen, classNam
           <div className="badge badge-ghost border-base-300 bg-base-100 text-base-content/60">{notifications.length} baru</div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:grid-cols-1">
+        <div className="grid shrink-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:grid-cols-1">
           <label className="input input-bordered flex h-12 items-center gap-2 rounded-[12px] border-base-300 bg-base-100 px-4 shadow-none transition-colors focus-within:border-primary/40 xl:h-[61px]">
             <SearchIcon className="size-4 text-base-content/50" />
             <input type="text" placeholder="Terbaru" className="grow text-sm font-semibold text-base-content/60" />
@@ -39,7 +39,7 @@ function NotificationComponent({ notifications, profile, onProfileOpen, classNam
           </button>
         </div>
 
-        <div className="mt-4 space-y-3 xl:mt-6">
+        <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 xl:mt-6">
           {notifications.map((notification) => (
             <div key={notification.id} className="rounded-[14px] border border-base-300/70 bg-base-200/40 p-3 transition-colors hover:bg-base-200/65 sm:p-4">
               <div className="flex items-start gap-3">

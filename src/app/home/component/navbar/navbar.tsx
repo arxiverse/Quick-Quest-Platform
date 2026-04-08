@@ -48,7 +48,7 @@ function NavbarButton({
 function NavbarComponent({ items, mobileItems, actions, activeView, onViewChange }: NavbarProps) {
   return (
     <>
-      <aside className="hidden xl:flex xl:min-h-[calc(100vh-2rem)] xl:flex-col xl:gap-4">
+      <aside className="hidden xl:fixed xl:left-4 xl:top-4 xl:z-40 xl:flex xl:h-[calc(100vh-2rem)] xl:w-[clamp(15rem,16vw,18rem)] xl:flex-col xl:gap-4">
         <Surface className="p-3">
           <div className="flex items-center gap-3 rounded-[14px] bg-base-200 p-3">
             <div className="flex size-[68px] items-center justify-center rounded-[16px] border border-base-300/70 bg-base-100 shadow-sm">
@@ -61,8 +61,8 @@ function NavbarComponent({ items, mobileItems, actions, activeView, onViewChange
           </div>
         </Surface>
 
-        <Surface className="flex-1 p-3">
-          <div className="space-y-3">
+        <Surface className="flex min-h-0 flex-1 p-3">
+          <div className="w-full space-y-3 overflow-y-auto pr-1">
             {items.map((item) => (
               <NavbarButton
                 key={item.key}
@@ -89,8 +89,8 @@ function NavbarComponent({ items, mobileItems, actions, activeView, onViewChange
       </aside>
 
       <div className="fixed inset-x-2 bottom-2 z-40 xl:hidden">
-        <div className="mx-auto max-w-[430px] rounded-[18px] border border-base-300/70 bg-base-100/95 px-2.5 py-2 shadow-[0_6px_30px_rgba(17,24,40,0.18)] backdrop-blur">
-          <div className="grid grid-cols-6 gap-1">
+        <div className="mx-auto max-w-[390px] rounded-[22px] border border-base-300/70 bg-base-100/95 px-3 py-2.5 shadow-[0_10px_32px_rgba(17,24,40,0.16)] backdrop-blur">
+          <div className="grid grid-cols-5 gap-1.5">
             {mobileItems.map((item) => {
               const Icon = homeIconRegistry[item.iconKey];
               const active = item.view === activeView;
@@ -98,13 +98,13 @@ function NavbarComponent({ items, mobileItems, actions, activeView, onViewChange
                 <button
                   key={item.key}
                   type="button"
-                  className="relative flex flex-col items-center gap-1 rounded-[12px] px-1.5 py-2 text-center transition-colors"
+                  className="relative flex flex-col items-center gap-1 rounded-[14px] px-1.5 py-2 text-center transition-colors"
                   onClick={() => item.view && onViewChange(item.view)}
                   aria-pressed={active}
                 >
-                  {active && <span className="absolute -top-2 h-[5px] w-10 rounded-full bg-[#6600FF]" />}
+                  {active && <span className="absolute -top-2 h-[5px] w-9 rounded-full bg-[#6600FF]" />}
                   <Icon className={cn("size-5 transition-colors", active ? "text-[#6600FF]" : "text-base-content/60")} />
-                  <span className={cn("text-[10px] font-medium sm:text-[11px]", active ? "text-[#6600FF]" : "text-base-content/60")}>
+                  <span className={cn("text-[10px] font-medium", active ? "text-[#6600FF]" : "text-base-content/60")}>
                     {item.mobileLabel ?? item.label}
                   </span>
                 </button>
