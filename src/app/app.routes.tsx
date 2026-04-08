@@ -7,5 +7,6 @@ import HomeComponent from "./home/home.tsx";
 export const RoutesComponent = [
     { path: "/login",element: <LoginComponent />},
     { path: "/register",element: <RegisterComponent />},
+    { path: "/home",element: <HomeComponent />},
     { path: "*", element: <Navigate to="/login" /> }
 ]
