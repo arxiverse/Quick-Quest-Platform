@@ -1,6 +1,7 @@
 ﻿import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
+import { clearAuthSession } from "../../../auth.guard";
 import { cn, Surface } from "../../home.ui";
 import type { ProfileProps, ProfileQuestItem, ProfileStatItem } from "./profile";
 import type { HomeProfile } from "../../home";
@@ -222,7 +223,11 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               <button type="button" className="btn h-10 min-h-10 rounded-[12px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base">
                 Ubah
               </button>
-              <Link to="/login" className="btn h-10 min-h-10 rounded-[12px] border-none bg-error px-5 text-sm text-error-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base">
+              <Link
+                to="/login"
+                onClick={() => clearAuthSession()}
+                className="btn h-10 min-h-10 rounded-[12px] border-none bg-error px-5 text-sm text-error-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base"
+              >
                 Logout
               </Link>
             </div>

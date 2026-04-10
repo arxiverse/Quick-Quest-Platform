@@ -1,4 +1,4 @@
-import GoogleLogo from "../../assets/svg/google-logo.svg";
+﻿import GoogleLogo from "../../assets/svg/google-logo.svg";
 import WhatsappLogo from "../../assets/svg/whatsapp-logo.svg";
 import LinkedinLogo from "../../assets/svg/linkedin-logo.svg";
 
@@ -16,7 +16,7 @@ export type LoginField = {
 
 export const loginFields: LoginField[] = [
   {
-    label: "Username / Email",
+    label: "Username / Email / No. HP",
     type: "text",
     name: "identity",
   },
