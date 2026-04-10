@@ -1,8 +1,9 @@
-﻿const { argon2Sync, randomBytes, timingSafeEqual } = require('node:crypto');
+﻿const { argon2Sync, createHash, randomBytes, randomUUID, timingSafeEqual } = require('node:crypto');
 
 const HASH_VERSION = 'v1';
 const HASH_PREFIX = `argon2id:${HASH_VERSION}`;
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
+const AUTH_TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'qqm-local-dev-secret';
 
 function deriveArgon2(password, salt) {
   return Buffer.from(
@@ -15,6 +16,10 @@ function deriveArgon2(password, salt) {
       passes: 3,
     })
   );
+}
+
+function generateUuidV4() {
+  return randomUUID();
 }
 
 function hashPassword(password) {
@@ -40,18 +45,28 @@ function verifyPassword(password, encodedHash) {
   return actualHash.length === expectedHash.length && timingSafeEqual(actualHash, expectedHash);
 }
 
-function createAccessToken() {
-  return randomBytes(48).toString('hex');
-}
+function createAuthToken(identityPayload) {
+  const issuedAt = Date.now().toString();
+  const entropy = randomBytes(24).toString('hex');
+  const serializedIdentity = JSON.stringify({
+    id: identityPayload.id,
+    username: identityPayload.username,
+    email: identityPayload.email,
+    phone: identityPayload.phone,
+  });
 
-function getGoGatewayUrl() {
-  return process.env.GO_API_URL || 'http://localhost:4460';
+  return createHash('sha256')
+    .update(serializedIdentity)
+    .update(issuedAt)
+    .update(entropy)
+    .update(AUTH_TOKEN_SECRET)
+    .digest('hex');
 }
 
 module.exports = {
   SESSION_DURATION_MS,
-  createAccessToken,
-  getGoGatewayUrl,
+  createAuthToken,
+  generateUuidV4,
   hashPassword,
   verifyPassword,
 };

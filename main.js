@@ -1,27 +1,31 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
-const app = express();
 const cors = require('cors');
+
+const AuthenticationService = require('./endpoint/auth');
+const ProfileService = require('./endpoint/profile');
+
+const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: ['http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+  origin: ['http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 app.get('/', (req, res) => {
-    res.json({ message: "Nothing to see here" });
+  res.json({
+    success: true,
+    message: 'Quick Quest Express gateway aktif.',
+  });
 });
 
-// Controllers
-const AuthenticationService = require('./controllers/auth')();
-
-// Routes
-app.use('/auth', AuthenticationService);
+app.use('/api', AuthenticationService());
+app.use('/api', ProfileService());
 
 const PORT = process.env.PORT || 4450;
 app.listen(PORT, () => {
-    console.log("Running")
-})
+  console.log(`Express gateway running on http://localhost:${PORT}`);
+});
