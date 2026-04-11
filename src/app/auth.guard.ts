@@ -1,7 +1,7 @@
-﻿export const AUTH_SESSION_STORAGE_KEY = "nvrs-qqm-auth-session";
+export const AUTH_SESSION_STORAGE_KEY = "nvrs-qqm-auth-session";
 
 export type AuthSession = {
-  accessToken: string;
+  accessToken?: string;
   refreshToken?: string;
   issuedAt: number;
   expiresAt: number;
@@ -16,34 +16,17 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  const segments = token.split(".");
-  if (segments.length !== 3) {
-    return null;
-  }
-
-  try {
-    const normalized = segments[1].replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-    const decoded = window.atob(padded);
-    const payload = JSON.parse(decoded) as unknown;
-    return isObject(payload) ? payload : null;
-  } catch {
-    return null;
-  }
-}
-
 function normalizeSession(value: unknown): AuthSession | null {
   if (!isObject(value)) {
     return null;
   }
 
-  if (typeof value.accessToken !== "string" || typeof value.issuedAt !== "number" || typeof value.expiresAt !== "number") {
+  if (typeof value.issuedAt !== "number" || typeof value.expiresAt !== "number") {
     return null;
   }
 
   return {
-    accessToken: value.accessToken,
+    accessToken: typeof value.accessToken === "string" ? value.accessToken : undefined,
     refreshToken: typeof value.refreshToken === "string" ? value.refreshToken : undefined,
     issuedAt: value.issuedAt,
     expiresAt: value.expiresAt,
@@ -54,6 +37,15 @@ function normalizeSession(value: unknown): AuthSession | null {
           email: typeof value.user.email === "string" ? value.user.email : undefined,
         }
       : undefined,
+  };
+}
+
+function sanitizeSessionForStorage(session: AuthSession): AuthSession {
+  return {
+    issuedAt: session.issuedAt,
+    expiresAt: session.expiresAt,
+    refreshToken: session.refreshToken,
+    user: session.user,
   };
 }
 
@@ -69,7 +61,19 @@ export function getStoredAuthSession(): AuthSession | null {
 
   try {
     const parsed = JSON.parse(rawSession) as unknown;
-    return normalizeSession(parsed);
+    const normalized = normalizeSession(parsed);
+    if (!normalized) {
+      return null;
+    }
+
+    // Migrate old storage format that still contains raw accessToken.
+    if (normalized.accessToken) {
+      const sanitized = sanitizeSessionForStorage(normalized);
+      window.localStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(sanitized));
+      return sanitized;
+    }
+
+    return normalized;
   } catch {
     return null;
   }
@@ -88,17 +92,13 @@ export function storeAuthSession(session: AuthSession): void {
     return;
   }
 
-  window.localStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+  const sanitizedSession = sanitizeSessionForStorage(session);
+  window.localStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(sanitizedSession));
 }
 
 export function isAuthSessionExpired(session: AuthSession): boolean {
-  if (!session.accessToken || !Number.isFinite(session.expiresAt)) {
+  if (!Number.isFinite(session.expiresAt)) {
     return true;
-  }
-
-  const jwtPayload = decodeJwtPayload(session.accessToken);
-  if (jwtPayload && typeof jwtPayload.exp === "number") {
-    return jwtPayload.exp * 1000 <= Date.now();
   }
 
   return session.expiresAt <= Date.now();

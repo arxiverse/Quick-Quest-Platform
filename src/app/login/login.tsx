@@ -1,12 +1,9 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SwitchTheme } from "../global.theme";
-import { ApiRequestError } from "../global.service";
-import { storeAuthSession } from "../auth.guard";
-import { loginWithCredentials } from "./login.service";
 import Logo from "../../assets/Figma/QQMLogo.png";
 import BorderGlow from "../../Animation/BorderGlow";
-import { loginFields, loginSocialItems, type AuthSocialItem } from "./login";
+import { getLoginFormErrorMessage, loginFields, loginSocialItems, submitLogin, type AuthSocialItem } from "./login";
 
 function SocialButton({ icon, label, className = "" }: AuthSocialItem) {
   return (
@@ -61,11 +58,7 @@ const LoginForm = ({ onLogin }: { onLogin: (identity: string, password: string) 
     try {
       await onLogin(identity, password);
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setFormError(error.message);
-      } else {
-        setFormError("Login gagal diproses, coba lagi bentar.");
-      }
+      setFormError(getLoginFormErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -157,13 +150,7 @@ function LoginComponent() {
   const navigate = useNavigate();
 
   async function handleLogin(identity: string, password: string) {
-    const response = await loginWithCredentials(identity, password);
-
-    if (!response.success || !response.data?.session) {
-      throw new ApiRequestError(response.message || "Session login tidak valid dari backend.");
-    }
-
-    storeAuthSession(response.data.session);
+    await submitLogin(identity, password);
     navigate("/home", { replace: true });
   }
 

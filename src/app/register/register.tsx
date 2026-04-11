@@ -1,27 +1,25 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SwitchTheme } from "../global.theme";
-import { ApiRequestError } from "../global.service";
 import Logo from "../../assets/Figma/QQMLogo.png";
 import BorderGlow from "../../Animation/BorderGlow";
 import {
   DUMMY_OTP_CODE,
+  getRegisterFormErrorMessage,
   getRegisterStep,
+  hasRegisterStepErrors,
   initialRegisterFormState,
   registerSocialItems,
   registerStepFlow,
   registerTimelineSteps,
+  submitRegisterForm,
+  validateRegisterStep,
   type AuthSocialItem,
   type RegisterField,
   type RegisterFieldName,
   type RegisterFormState,
-} from "./register";
-import {
-  hasRegisterStepErrors,
-  registerUser,
-  validateRegisterStep,
   type RegisterStepErrors,
-} from "./register.service";
+} from "./register";
 
 function SocialButton({ icon, label, className = "" }: AuthSocialItem) {
   return (
@@ -137,7 +135,7 @@ function RegisterForm() {
 
     setIsSubmitting(true);
     try {
-      const response = await registerUser(formState);
+      const response = await submitRegisterForm(formState);
       navigate("/login", {
         replace: true,
         state: {
@@ -146,11 +144,7 @@ function RegisterForm() {
         },
       });
     } catch (error) {
-      if (error instanceof ApiRequestError) {
-        setRequestMessage(error.message);
-      } else {
-        setRequestMessage("Register gagal diproses, coba ulang beberapa saat lagi.");
-      }
+      setRequestMessage(getRegisterFormErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

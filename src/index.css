@@ -125,24 +125,36 @@ body {
 .theme-bg::after {
   content: "";
   position: absolute;
-  width: 2687px;
-  height: 2687px;
+  width: 1900px;
+  height: 1900px;
   pointer-events: none;
-  filter: blur(200px);
+  filter: blur(150px);
   z-index: -1;
 }
 
 .theme-bg::before {
-  left: -1344px;
-  top: 559px;
-  background: linear-gradient(180deg, rgba(157, 0, 255, 0.226) 5%, rgba(0, 26, 255, 0.192) 100%);
+  left: -980px;
+  top: 220px;
+  background: radial-gradient(circle at center, rgba(14, 165, 233, 0.18) 0%, rgba(14, 165, 233, 0) 72%);
 }
 
 .theme-bg::after {
-  left: 384px;
-  top: -2128px;
-  background: linear-gradient(180deg, rgba(0, 26, 255, 0.192) 100%, rgba(157, 0, 255, 0.226) 5%);
-  transform: rotate(180deg);
+  right: -760px;
+  top: -980px;
+  background: radial-gradient(circle at center, rgba(34, 197, 94, 0.14) 0%, rgba(34, 197, 94, 0) 70%);
+}
+
+.home-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-base-300) 80%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-base-300) 80%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 .auth-stage {

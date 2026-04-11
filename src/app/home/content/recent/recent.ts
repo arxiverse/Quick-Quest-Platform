@@ -4,3 +4,5 @@
   time: string;
 };
 
+export { recentActivities } from "./recent.service";
+

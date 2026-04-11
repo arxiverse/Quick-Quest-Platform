@@ -5,3 +5,5 @@
   note: string;
 };
 
+export { giverCampaigns } from "./giver.service";
+

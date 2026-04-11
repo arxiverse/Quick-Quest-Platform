@@ -20,7 +20,7 @@ import {
   analysisMetrics,
   analysisStatusPoints,
   analysisTrendPoints,
-} from "./analysis.service";
+} from "./analysis";
 
 type TooltipRow = {
   color?: string;
@@ -38,7 +38,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   }
 
   return (
-    <div className="rounded-[14px] border border-base-300/70 bg-base-100/95 px-3 py-2 shadow-lg backdrop-blur">
+    <div className="rounded-[10px] border border-base-300/70 bg-base-100/95 px-3 py-2 shadow-lg backdrop-blur">
       {label && <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45">{label}</p>}
       <div className="space-y-1.5">
         {payload.map((entry) => (
@@ -55,7 +55,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 function AnalysisComponent() {
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {analysisMetrics.map((metric) => (
           <Surface key={metric.label} className="p-5">
@@ -76,8 +76,8 @@ function AnalysisComponent() {
             <div className="badge badge-ghost border-base-300 bg-base-100 text-base-content/65">7 hari terakhir</div>
           </div>
 
-          <div className="mt-6 h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="mt-6 h-[320px] min-h-[320px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height={320}>
               <LineChart data={analysisTrendPoints} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(148,163,184,0.15)" vertical={false} />
                 <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fill: "currentColor", fontSize: 12 }} />
@@ -127,8 +127,8 @@ function AnalysisComponent() {
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr] xl:grid-cols-1 2xl:grid-cols-[0.92fr_1.08fr]">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[250px] min-h-[250px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Tooltip content={<ChartTooltip />} />
                   <Pie
@@ -148,9 +148,9 @@ function AnalysisComponent() {
               </ResponsiveContainer>
             </div>
 
-            <div className="space-y-3">
+            <div className="min-w-0 space-y-3">
               {analysisCategoryPoints.map((category) => (
-                <div key={category.name} className="flex items-center justify-between gap-3 rounded-[14px] border border-base-300/70 bg-base-100 px-4 py-3">
+                <div key={category.name} className="flex items-center justify-between gap-3 rounded-[12px] border border-base-300/70 bg-base-100 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <span className="size-3 rounded-full" style={{ backgroundColor: category.fill }} />
                     <span className="text-sm font-semibold text-base-content">{category.name}</span>
@@ -171,8 +171,8 @@ function AnalysisComponent() {
             <div className="badge badge-ghost border-base-300 bg-base-100 text-base-content/65">Live snapshot</div>
           </div>
 
-          <div className="mt-6 h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="mt-6 h-[320px] min-h-[320px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height={320}>
               <BarChart data={analysisStatusPoints} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(148,163,184,0.15)" vertical={false} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "currentColor", fontSize: 12 }} />

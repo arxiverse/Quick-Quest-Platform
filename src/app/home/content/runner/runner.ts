@@ -5,3 +5,5 @@
   location: string;
 };
 
+export { runnerMembers } from "./runner.service";
+

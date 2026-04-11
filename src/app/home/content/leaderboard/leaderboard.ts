@@ -5,3 +5,5 @@
   badge: string;
 };
 
+export { leaderboardEntries } from "./leaderboard.service";
+

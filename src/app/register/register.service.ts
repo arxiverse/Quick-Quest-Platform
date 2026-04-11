@@ -1,107 +1,40 @@
-﻿import GlobalEndpoint, { postJson, ApiRequestError } from "../global.service";
-import { DUMMY_OTP_CODE, type RegisterFieldName, type RegisterFlowStepKey, type RegisterFormState } from "./register";
+import GlobalEndpoint, { ApiRequestError, postJson } from "../global.service";
 
-export type RegisterStepErrors = Partial<Record<RegisterFieldName, string>>;
-
-export type RegisterRequestPayload = Omit<RegisterFormState, "otp_code">;
+export type RegisterRequestPayload = {
+  username: string;
+  email: string;
+  phone: string;
+  fullname: string;
+  birthdate: string;
+  province: string;
+  city: string;
+  district: string;
+  sub_district: string;
+  full_address: string;
+  tags_skills: string;
+  password: string;
+};
 
 export type RegisterResponse = {
   success: boolean;
   message: string;
   data?: {
-    local?: {
-      user_id: string;
-      auth_id: string;
+    user?: {
+      id: string;
+      username: string;
+      email: string;
+      phone: string;
     };
-    cloud?: unknown;
+    auth?: {
+      id: string;
+      auth_token?: string;
+    };
+    sync?: unknown;
+    sync_enabled?: boolean;
   };
 };
 
-const STEP_FIELDS: Record<RegisterFlowStepKey, RegisterFieldName[]> = {
-  account: ["username", "email", "phone"],
-  otp: ["otp_code"],
-  identity: ["fullname", "birthdate", "province", "city", "district", "sub_district", "full_address"],
-  skills: ["tags_skills"],
-  password: ["password"],
-};
-
-function validateEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function validatePhone(value: string): boolean {
-  return /^\+?[0-9]{8,16}$/.test(value);
-}
-
-function validateOtp(value: string): boolean {
-  return /^\d{6}$/.test(value);
-}
-
-export function validateRegisterStep(step: RegisterFlowStepKey, form: RegisterFormState): RegisterStepErrors {
-  const errors: RegisterStepErrors = {};
-
-  for (const fieldName of STEP_FIELDS[step]) {
-    const value = form[fieldName].trim();
-
-    if (!value) {
-      errors[fieldName] = "Field ini wajib diisi.";
-      continue;
-    }
-
-    if (fieldName === "email" && !validateEmail(value)) {
-      errors[fieldName] = "Format email belum valid.";
-      continue;
-    }
-
-    if (fieldName === "phone" && !validatePhone(value)) {
-      errors[fieldName] = "Nomor HP harus angka 8-16 digit.";
-      continue;
-    }
-
-    if (fieldName === "otp_code") {
-      if (!validateOtp(value)) {
-        errors[fieldName] = "OTP harus 6 digit angka.";
-        continue;
-      }
-
-      if (value !== DUMMY_OTP_CODE) {
-        errors[fieldName] = "OTP dummy belum cocok. Pakai kode 123456 dulu ya.";
-        continue;
-      }
-    }
-
-    if (fieldName === "password" && value.length < 8) {
-      errors[fieldName] = "Password minimal 8 karakter.";
-      continue;
-    }
-  }
-
-  return errors;
-}
-
-export function hasRegisterStepErrors(errors: RegisterStepErrors): boolean {
-  return Object.keys(errors).length > 0;
-}
-
-export function normalizeRegisterPayload(form: RegisterFormState): RegisterRequestPayload {
-  return {
-    username: form.username.trim(),
-    email: form.email.trim().toLowerCase(),
-    phone: form.phone.trim(),
-    fullname: form.fullname.trim(),
-    birthdate: form.birthdate.trim(),
-    province: form.province.trim(),
-    city: form.city.trim(),
-    district: form.district.trim(),
-    sub_district: form.sub_district.trim(),
-    full_address: form.full_address.trim(),
-    tags_skills: form.tags_skills.trim(),
-    password: form.password,
-  };
-}
-
-export async function registerUser(form: RegisterFormState): Promise<RegisterResponse> {
-  const payload = normalizeRegisterPayload(form);
+export async function registerUser(payload: RegisterRequestPayload): Promise<RegisterResponse> {
   const endpoints = GlobalEndpoint();
 
   try {
@@ -113,4 +46,12 @@ export async function registerUser(form: RegisterFormState): Promise<RegisterRes
 
     throw new ApiRequestError("Register gagal dikirim ke backend.");
   }
+}
+
+export function getRegisterServiceErrorMessage(error: unknown, fallbackMessage: string): string {
+  if (error instanceof ApiRequestError || error instanceof Error) {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }

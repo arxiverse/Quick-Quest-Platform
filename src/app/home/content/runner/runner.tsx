@@ -1,5 +1,5 @@
 ﻿import { Surface } from "../../home.ui";
-import { runnerMembers } from "./runner.service";
+import { runnerMembers } from "./runner";
 
 function RunnerComponent() {
   return (

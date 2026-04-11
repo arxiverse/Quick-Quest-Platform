@@ -1,5 +1,5 @@
 ﻿import { Surface } from "../../home.ui";
-import { chatPreviews } from "./chat.service";
+import { chatPreviews } from "./chat";
 
 function ChatComponent() {
   return (
@@ -7,7 +7,7 @@ function ChatComponent() {
       <Surface className="p-2 sm:p-2">
         <div className="space-y-3">
           {chatPreviews.map((chat) => (
-            <button key={`${chat.name}-${chat.time}`} type="button" className="w-full items-start gap-3 rounded-[14px] border border-base-300/70 bg-base-100 p-3 text-left transition-colors hover:bg-base-200/70">
+            <button key={`${chat.name}-${chat.time}`} type="button" className="w-full items-start gap-3 rounded-[10px] border border-base-300/70 bg-base-100 p-3 text-left transition-colors hover:bg-base-200/70">
               <div className="mt-1 size-10 rounded-full bg-base-300" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
@@ -42,4 +42,3 @@ function ChatComponent() {
 }
 
 export default ChatComponent;
-

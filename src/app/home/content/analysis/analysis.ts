@@ -28,3 +28,11 @@ export type AnalysisCategoryPoint = {
   value: number;
   fill: string;
 };
+
+export {
+  analysisCategoryPoints,
+  analysisFlows,
+  analysisMetrics,
+  analysisStatusPoints,
+  analysisTrendPoints,
+} from "./analysis.service";

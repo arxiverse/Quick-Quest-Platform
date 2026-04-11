@@ -22,7 +22,7 @@ import {
   initialHomeView,
   mobileNavItems,
   mobileShortcutItems,
-} from "./home.service";
+} from "./home";
 import { cn, Surface } from "./home.ui";
 import { isHomeView, type HomeNavItem, type HomeView } from "./home";
 
@@ -71,7 +71,7 @@ function MobileShortcutNav({
               className={cn(
                 "flex shrink-0 items-center gap-2 rounded-[14px] border px-3 py-2 text-sm font-semibold transition-colors",
                 active
-                  ? "border-[#8B3DFF] bg-[#A046FF] text-white"
+                  ? "border-[#2563EB] bg-[#2563EB] text-white"
                   : "border-base-300 bg-base-100 text-base-content/70 hover:border-primary/25 hover:bg-base-200/60"
               )}
               onClick={() => item.view && onViewChange(item.view)}
@@ -104,8 +104,8 @@ function HomeComponent() {
   const activeMeta = getHomeViewMeta(activeView);
   const isProfileView = activeView === "profile";
   const desktopShellStyle = {
-    "--desktop-left-offset": "calc(clamp(15rem,16vw,18rem) + 1.25rem)",
-    "--desktop-right-offset": isProfileView ? "0rem" : "calc(clamp(18rem,19vw,24rem) + 1.25rem)",
+    "--desktop-left-offset": "calc(clamp(14.5rem,15vw,17rem) + 1rem)",
+    "--desktop-right-offset": isProfileView ? "0rem" : "calc(clamp(17rem,18vw,22rem) + 1rem)",
     "--desktop-page-pad": "1rem",
   } as CSSProperties;
 
@@ -116,7 +116,7 @@ function HomeComponent() {
   return (
     <div
       style={desktopShellStyle}
-      className="theme-bg min-h-screen bg-base-200 px-2 py-3 text-base-content sm:px-4 sm:py-4 2xl:px-6"
+      className="theme-bg home-shell min-h-screen bg-base-200 px-2 py-3 text-base-content sm:px-4 sm:py-4 2xl:px-5"
     >
       <NavbarComponent
         items={desktopNavItems}
@@ -127,7 +127,7 @@ function HomeComponent() {
       />
 
       {!isProfileView && (
-        <aside className="hidden xl:fixed xl:right-4 xl:top-4 xl:z-20 xl:block xl:h-[calc(100vh-2rem)] xl:w-[clamp(18rem,19vw,24rem)]">
+        <aside className="hidden xl:fixed xl:right-4 xl:top-4 xl:z-20 xl:block xl:h-[calc(100vh-2rem)] xl:w-[clamp(17rem,18vw,22rem)]">
           <NotificationComponent
             notifications={homeNotifications}
             profile={homeProfile}
@@ -153,14 +153,14 @@ function HomeComponent() {
                 />
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-3">
               <MobileShortcutNav items={mobileShortcutItems} activeView={activeView} onViewChange={setActiveView} />
             </div>
           </>
         )}
 
-        <main className={cn("min-w-0 pb-24", !isProfileView && "mt-4 xl:mt-[6.75rem]")}>
-          <div className="flex flex-col gap-5">
+        <main className={cn("min-w-0 pb-24", !isProfileView && "mt-3 xl:mt-[6.25rem]")}>
+          <div className="flex flex-col gap-4">
             {isProfileView && (
               <div className="xl:hidden">
                 <ProfileComponent profile={homeProfile} className="w-full" />

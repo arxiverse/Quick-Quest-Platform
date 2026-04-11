@@ -1,7 +1,7 @@
 ﻿import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Surface } from "../../home.ui";
-import { elementChartPoints, elementMetrics, elementTableRows } from "./element.service";
+import { elementChartPoints, elementMetrics, elementTableRows } from "./element";
 
 type TooltipRow = {
   color?: string;
@@ -15,7 +15,7 @@ function ElementTooltip({ active, payload, label }: { active?: boolean; payload?
   }
 
   return (
-    <div className="rounded-[14px] border border-base-300/70 bg-base-100/95 px-3 py-2 shadow-lg backdrop-blur">
+    <div className="rounded-[10px] border border-base-300/70 bg-base-100/95 px-3 py-2 shadow-lg backdrop-blur">
       {label && <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45">{label}</p>}
       <div className="space-y-1.5">
         {payload.map((entry) => (
@@ -85,16 +85,16 @@ function ElementComponent() {
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-base-content/45">UI Elements</p>
               <h2 className="mt-2 text-xl font-bold text-base-content">Buttons, Badge, Modal</h2>
             </div>
-            <button type="button" className="btn btn-sm rounded-[10px] border-none bg-primary text-primary-content shadow-none hover:opacity-90" onClick={() => setShowModal(true)}>
+            <button type="button" className="btn btn-sm rounded-[8px] border-none bg-primary text-primary-content shadow-none hover:opacity-90" onClick={() => setShowModal(true)}>
               Open Modal
             </button>
           </div>
 
           <div className="mt-6 space-y-5">
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="btn rounded-[12px] border-none bg-primary text-primary-content shadow-none hover:opacity-90">Primary</button>
-              <button type="button" className="btn rounded-[12px] border-base-300 bg-base-100 shadow-none hover:bg-base-200">Secondary</button>
-              <button type="button" className="btn rounded-[12px] border-none bg-error text-error-content shadow-none hover:opacity-90">Danger</button>
+              <button type="button" className="btn rounded-[8px] border-none bg-primary text-primary-content shadow-none hover:opacity-90">Primary</button>
+              <button type="button" className="btn rounded-[8px] border-base-300 bg-base-100 shadow-none hover:bg-base-200">Secondary</button>
+              <button type="button" className="btn rounded-[8px] border-none bg-error text-error-content shadow-none hover:opacity-90">Danger</button>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -107,12 +107,12 @@ function ElementComponent() {
             <div className="space-y-3">
               <label className="form-control gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45">Nama Element</span>
-                <input type="text" placeholder="Input placeholder" className="input input-bordered rounded-[12px] border-base-300 bg-base-100" />
+                <input type="text" placeholder="Input placeholder" className="input input-bordered rounded-[8px] border-base-300 bg-base-100" />
               </label>
 
               <label className="form-control gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45">Kategori</span>
-                <select className="select select-bordered rounded-[12px] border-base-300 bg-base-100">
+                <select className="select select-bordered rounded-[8px] border-base-300 bg-base-100">
                   <option>Cards</option>
                   <option>Charts</option>
                   <option>Forms</option>
@@ -161,17 +161,17 @@ function ElementComponent() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[24px] border border-base-300/70 bg-base-100 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-[12px] border border-base-300/70 bg-base-100 p-6 shadow-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-base-content/45">Modal Example</p>
             <h3 className="mt-2 text-2xl font-bold text-base-content">UI Density Confirmed</h3>
             <p className="mt-3 text-sm leading-relaxed text-base-content/65">
               Modal ini sengaja simpel, buat nunjukin kalau shell kita sekarang udah siap nampung dialog, form action, dan interaction pattern tambahan.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" className="btn rounded-[12px] border-base-300 bg-base-100 shadow-none hover:bg-base-200" onClick={() => setShowModal(false)}>
+              <button type="button" className="btn rounded-[8px] border-base-300 bg-base-100 shadow-none hover:bg-base-200" onClick={() => setShowModal(false)}>
                 Tutup
               </button>
-              <button type="button" className="btn rounded-[12px] border-none bg-primary text-primary-content shadow-none hover:opacity-90" onClick={() => setShowModal(false)}>
+              <button type="button" className="btn rounded-[8px] border-none bg-primary text-primary-content shadow-none hover:opacity-90" onClick={() => setShowModal(false)}>
                 Mantap
               </button>
             </div>

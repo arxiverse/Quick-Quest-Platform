@@ -17,3 +17,5 @@ export type ElementTableRow = {
   status: string;
   completion: string;
 };
+
+export { elementChartPoints, elementMetrics, elementTableRows } from "./element.service";

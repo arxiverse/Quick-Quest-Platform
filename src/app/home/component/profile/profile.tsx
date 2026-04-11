@@ -1,9 +1,8 @@
-﻿import { Link } from "react-router-dom";
-import type { ReactNode } from "react";
+﻿import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
-import { clearAuthSession } from "../../../auth.guard";
 import { cn, Surface } from "../../home.ui";
-import type { ProfileProps, ProfileQuestItem, ProfileStatItem } from "./profile";
+import { clearProfileSession, loadHomeProfile, type ProfileProps, type ProfileQuestItem, type ProfileStatItem } from "./profile";
 import type { HomeProfile } from "../../home";
 
 const profileStats: ProfileStatItem[] = [
@@ -34,6 +33,20 @@ const profileQuestItems: ProfileQuestItem[] = [
     reward: "Rp. 200.000 - Rp.350.000",
     score: "2.97",
   },
+];
+
+const performanceLadder = [
+  { tier: "Q1", label: "Entry / Instan", state: "complete" as const },
+  { tier: "Q2", label: "Semi-professional", state: "active" as const },
+  { tier: "Q3", label: "Professional", state: "locked" as const },
+];
+
+const trustTimeline = [
+  { label: "UNPAID", state: "done" as const },
+  { label: "LOCKED", state: "done" as const },
+  { label: "IN_PROGRESS", state: "active" as const },
+  { label: "PENDING_CONFIRMATION", state: "idle" as const },
+  { label: "RELEASED", state: "idle" as const },
 ];
 
 function IdentityIcon({ children }: { children: ReactNode }) {
@@ -148,17 +161,17 @@ function MetricPill({ icon, children, className = "" }: { icon: ReactNode; child
 
 function QuestCard({ quest }: { quest: ProfileQuestItem }) {
   return (
-    <div className="rounded-[18px] border border-base-300/70 bg-base-100 p-4 shadow-[0_3px_10px_rgba(17,24,40,0.08)] sm:p-5">
+    <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-base-content sm:text-[2rem]">{quest.title}</h3>
+          <h3 className="text-xl font-bold text-base-content sm:text-[1.75rem]">{quest.title}</h3>
         </div>
         <div className="flex items-start gap-3">
           <div className="text-right">
-            <p className="text-lg font-bold text-base-content sm:text-[2rem]">{quest.owner}</p>
-            <p className="text-sm font-medium text-base-content/55 sm:text-xl">{quest.role}</p>
+            <p className="text-lg font-bold text-base-content sm:text-[1.25rem]">{quest.owner}</p>
+            <p className="text-sm font-medium text-base-content/55 sm:text-base">{quest.role}</p>
           </div>
-          <div className="size-12 rounded-[12px] bg-base-300 sm:size-[64px]" />
+          <div className="size-12 rounded-[10px] bg-base-300 sm:size-[56px]" />
         </div>
       </div>
 
@@ -203,39 +216,74 @@ function ProfileIdentityRow({ icon, children }: { icon: ReactNode; children: Rea
 }
 
 export function ProfileContent({ profile }: { profile: HomeProfile }) {
+  const navigate = useNavigate();
+  const [resolvedProfile, setResolvedProfile] = useState<HomeProfile>(profile);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadProfile() {
+      const result = await loadHomeProfile(profile);
+      if (isCancelled) {
+        return;
+      }
+
+      if (result.shouldRedirectToLogin) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      setResolvedProfile(result.profile);
+      setProfileError(result.errorMessage ?? null);
+    }
+    loadProfile();
+    return () => {
+      isCancelled = true;
+    };
+  }, [navigate, profile]);
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      <Surface className="p-4 sm:p-5">
-        <div className="flex flex-col gap-4 sm:gap-5">
-          <div className="flex items-start justify-between gap-3">
+      <Surface className="p-4 sm:p-6">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className="flex size-[72px] shrink-0 items-center justify-center rounded-[14px] bg-base-200 sm:size-[92px]">
+              <div className="flex size-[72px] shrink-0 items-center justify-center rounded-[12px] bg-base-200 sm:size-[86px]">
                 <img src={Logo} alt="QQM" className="size-[52px] object-contain sm:size-[68px]" />
               </div>
-              <div className="min-w-0 space-y-2">
-                <ProfileIdentityRow icon={<UserIdentityIcon />}>{profile.name}</ProfileIdentityRow>
-                <ProfileIdentityRow icon={<MailIdentityIcon />}>{profile.email}</ProfileIdentityRow>
-                <ProfileIdentityRow icon={<PhoneIdentityIcon />}>{profile.phone}</ProfileIdentityRow>
-                <ProfileIdentityRow icon={<LocationIdentityIcon />}>{profile.address}</ProfileIdentityRow>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-base-content/45">Identity</p>
+                <h2 className="mt-1 text-2xl font-bold text-base-content sm:text-[2rem]">{resolvedProfile.name}</h2>
+                <p className="mt-1 text-sm text-base-content/60">{profile.role}</p>
+                <div className="mt-3 space-y-2">
+                <ProfileIdentityRow icon={<UserIdentityIcon />}>{resolvedProfile.name}</ProfileIdentityRow>
+                <ProfileIdentityRow icon={<MailIdentityIcon />}>{resolvedProfile.email}</ProfileIdentityRow>
+                <ProfileIdentityRow icon={<PhoneIdentityIcon />}>{resolvedProfile.phone}</ProfileIdentityRow>
+                <ProfileIdentityRow icon={<LocationIdentityIcon />}>{resolvedProfile.address}</ProfileIdentityRow>
+                </div>
               </div>
             </div>
-            <div className="flex shrink-0 flex-col gap-2">
-              <button type="button" className="btn h-10 min-h-10 rounded-[12px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base">
+            <div className="flex shrink-0 flex-col gap-2 lg:min-w-[11rem]">
+              <button type="button" className="btn h-10 min-h-10 rounded-[8px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-11 sm:min-h-11 sm:px-6">
                 Ubah
               </button>
               <Link
                 to="/login"
-                onClick={() => clearAuthSession()}
-                className="btn h-10 min-h-10 rounded-[12px] border-none bg-error px-5 text-sm text-error-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-7 sm:text-base"
+                onClick={() => clearProfileSession()}
+                className="btn h-10 min-h-10 rounded-[8px] border-none bg-error px-5 text-sm text-error-content shadow-none hover:opacity-90 sm:h-11 sm:min-h-11 sm:px-6"
               >
                 Logout
               </Link>
             </div>
           </div>
 
+          {profileError ? (
+            <div className="rounded-[8px] border border-error/40 bg-error/10 px-3 py-2 text-xs text-error">
+              {profileError}
+            </div>
+          ) : null}
+
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {profileStats.map((stat) => (
-              <div key={stat.label} className="flex items-center gap-2.5 rounded-[14px] border border-base-300/60 bg-base-100 px-3 py-2.5">
+              <div key={stat.label} className="flex items-center gap-2.5 rounded-[10px] border border-base-300/60 bg-base-100 px-3 py-2.5">
                 <StatIcon iconKey={stat.iconKey} className={stat.toneClass} />
                 <p className="text-sm font-semibold text-base-content sm:text-base">
                   <span>{stat.label}</span>
@@ -245,10 +293,54 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               </div>
             ))}
           </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Performance Ladder</p>
+              <h3 className="mt-1 text-lg font-bold text-base-content">Progress Tingkatan QQM</h3>
+              <div className="mt-3 space-y-2.5">
+                {performanceLadder.map((item) => (
+                  <div key={item.tier} className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        "inline-flex min-w-[52px] justify-center rounded-[8px] px-2.5 py-1 text-xs font-bold",
+                        item.state === "complete" && "bg-[#DCFCE7] text-[#166534]",
+                        item.state === "active" && "bg-[#DBEAFE] text-[#1D4ED8]",
+                        item.state === "locked" && "bg-base-200 text-base-content/60"
+                      )}
+                    >
+                      {item.tier}
+                    </span>
+                    <p className="text-sm font-medium text-base-content/80">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Trust Layer</p>
+              <h3 className="mt-1 text-lg font-bold text-base-content">Escrow & Session Timeline</h3>
+              <div className="mt-3 grid gap-2">
+                {trustTimeline.map((item) => (
+                  <div key={item.label} className="flex items-center gap-3 rounded-[8px] bg-base-200/70 px-3 py-2">
+                    <span
+                      className={cn(
+                        "size-2.5 rounded-full",
+                        item.state === "done" && "bg-success",
+                        item.state === "active" && "bg-info",
+                        item.state === "idle" && "bg-base-300"
+                      )}
+                    />
+                    <p className="text-xs font-semibold tracking-[0.04em] text-base-content/75 sm:text-sm">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </Surface>
 
-      <Surface className="p-4 sm:p-5">
+      <Surface className="p-4 sm:p-6">
         <div className="mb-4 flex items-center gap-3 sm:mb-5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5 text-[#6B21FF] sm:size-6">
             <rect x="5" y="4" width="14" height="16" rx="2" />
@@ -256,13 +348,23 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
             <path d="M8 11H16" strokeLinecap="round" />
             <path d="M8 15H13" strokeLinecap="round" />
           </svg>
-          <h2 className="text-xl font-bold text-base-content sm:text-[2rem]">Quest Giver</h2>
+          <h2 className="text-xl font-bold text-base-content sm:text-[1.75rem]">Quest Giver</h2>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 xl:hidden">
           {profileQuestItems.map((quest) => (
             <QuestCard key={`${quest.title}-${quest.score}`} quest={quest} />
           ))}
+        </div>
+
+        <div className="hidden xl:block">
+          <div className="overflow-x-auto pb-1">
+            <div className="grid grid-flow-col grid-rows-2 gap-4 [grid-auto-columns:minmax(360px,1fr)]">
+              {profileQuestItems.map((quest) => (
+                <QuestCard key={`${quest.title}-${quest.score}`} quest={quest} />
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex items-center justify-end gap-3 xl:hidden">
@@ -282,7 +384,7 @@ function ProfileComponent({ profile, compact = false, className = "", showMeta =
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-[18px] border border-base-300/70 bg-base-100/95 shadow-[0_3px_10px_rgba(17,24,40,0.08)] backdrop-blur",
+        "flex items-center gap-3 rounded-[12px] border border-base-300/70 bg-base-100/95 shadow-[0_6px_18px_rgba(15,23,42,0.07)] backdrop-blur",
         compact ? "px-3 py-2" : "px-3 py-2.5 sm:px-4 sm:py-3",
         className
       )}
@@ -309,3 +411,4 @@ function ProfileComponent({ profile, compact = false, className = "", showMeta =
 }
 
 export default ProfileComponent;
+

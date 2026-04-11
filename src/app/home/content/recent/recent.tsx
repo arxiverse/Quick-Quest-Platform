@@ -1,5 +1,5 @@
 ﻿import { Surface } from "../../home.ui";
-import { recentActivities } from "./recent.service";
+import { recentActivities } from "./recent";
 
 function RecentComponent() {
   return (

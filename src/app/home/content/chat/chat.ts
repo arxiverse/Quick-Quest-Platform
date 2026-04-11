@@ -5,3 +5,5 @@
   unread?: boolean;
 };
 
+export { chatPreviews } from "./chat.service";
+

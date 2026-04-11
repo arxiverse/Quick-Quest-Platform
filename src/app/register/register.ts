@@ -1,5 +1,11 @@
-﻿import GoogleLogo from "../../assets/svg/google-logo.svg";
+import GoogleLogo from "../../assets/svg/google-logo.svg";
 import LinkedinLogo from "../../assets/svg/linkedin-logo.svg";
+import {
+  getRegisterServiceErrorMessage,
+  registerUser,
+  type RegisterRequestPayload,
+  type RegisterResponse,
+} from "./register.service";
 
 export type AuthSocialItem = {
   icon: string;
@@ -46,7 +52,17 @@ export type RegisterStep = {
 
 export type RegisterFormState = Record<RegisterFieldName, string>;
 
+export type RegisterStepErrors = Partial<Record<RegisterFieldName, string>>;
+
 export const DUMMY_OTP_CODE = "123456";
+
+const STEP_FIELDS: Record<RegisterFlowStepKey, RegisterFieldName[]> = {
+  account: ["username", "email", "phone"],
+  otp: ["otp_code"],
+  identity: ["fullname", "birthdate", "province", "city", "district", "sub_district", "full_address"],
+  skills: ["tags_skills"],
+  password: ["password"],
+};
 
 export const registerSocialItems: AuthSocialItem[] = [
   {
@@ -163,6 +179,18 @@ export const registerTimelineSteps: RegisterStep[] = [
 
 export const registerStepFlow: RegisterFlowStepKey[] = ["account", "otp", "identity", "skills", "password"];
 
+function validateEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function validatePhone(value: string): boolean {
+  return /^\+?[0-9]{8,16}$/.test(value);
+}
+
+function validateOtp(value: string): boolean {
+  return /^\d{6}$/.test(value);
+}
+
 export function getRegisterStep(stepKey: RegisterStepKey): RegisterStep {
   const step = registerTimelineSteps.find((item) => item.key === stepKey);
   if (!step) {
@@ -170,4 +198,74 @@ export function getRegisterStep(stepKey: RegisterStepKey): RegisterStep {
   }
 
   return step;
+}
+
+export function validateRegisterStep(step: RegisterFlowStepKey, form: RegisterFormState): RegisterStepErrors {
+  const errors: RegisterStepErrors = {};
+
+  for (const fieldName of STEP_FIELDS[step]) {
+    const value = form[fieldName].trim();
+
+    if (!value) {
+      errors[fieldName] = "Field ini wajib diisi.";
+      continue;
+    }
+
+    if (fieldName === "email" && !validateEmail(value)) {
+      errors[fieldName] = "Format email belum valid.";
+      continue;
+    }
+
+    if (fieldName === "phone" && !validatePhone(value)) {
+      errors[fieldName] = "Nomor HP harus angka 8-16 digit.";
+      continue;
+    }
+
+    if (fieldName === "otp_code") {
+      if (!validateOtp(value)) {
+        errors[fieldName] = "OTP harus 6 digit angka.";
+        continue;
+      }
+
+      if (value !== DUMMY_OTP_CODE) {
+        errors[fieldName] = "OTP dummy belum cocok. Pakai kode 123456 dulu ya.";
+        continue;
+      }
+    }
+
+    if (fieldName === "password" && value.length < 8) {
+      errors[fieldName] = "Password minimal 8 karakter.";
+    }
+  }
+
+  return errors;
+}
+
+export function hasRegisterStepErrors(errors: RegisterStepErrors): boolean {
+  return Object.keys(errors).length > 0;
+}
+
+export function normalizeRegisterPayload(form: RegisterFormState): RegisterRequestPayload {
+  return {
+    username: form.username.trim(),
+    email: form.email.trim().toLowerCase(),
+    phone: form.phone.trim(),
+    fullname: form.fullname.trim(),
+    birthdate: form.birthdate.trim(),
+    province: form.province.trim(),
+    city: form.city.trim(),
+    district: form.district.trim(),
+    sub_district: form.sub_district.trim(),
+    full_address: form.full_address.trim(),
+    tags_skills: form.tags_skills.trim(),
+    password: form.password,
+  };
+}
+
+export function getRegisterFormErrorMessage(error: unknown): string {
+  return getRegisterServiceErrorMessage(error, "Register gagal diproses, coba ulang beberapa saat lagi.");
+}
+
+export async function submitRegisterForm(form: RegisterFormState): Promise<RegisterResponse> {
+  return registerUser(normalizeRegisterPayload(form));
 }

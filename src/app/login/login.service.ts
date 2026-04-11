@@ -1,16 +1,27 @@
-﻿import GlobalEndpoint, { ApiRequestError, postJson } from "../global.service";
-import type { AuthSession } from "../auth.guard";
+import GlobalEndpoint, { ApiRequestError, postJson } from "../global.service";
 
 export type LoginRequestPayload = {
   identity: string;
   password: string;
 };
 
+export type LoginSessionPayload = {
+  accessToken?: string;
+  refreshToken?: string;
+  issuedAt: number;
+  expiresAt: number;
+  user?: {
+    id?: string;
+    username?: string;
+    email?: string;
+  };
+};
+
 export type LoginResponse = {
   success: boolean;
   message: string;
   data?: {
-    session: AuthSession;
+    session: LoginSessionPayload;
     authorization: string;
   };
 };
@@ -40,4 +51,12 @@ export async function loginWithCredentials(identity: string, password: string): 
 
     throw new ApiRequestError("Login gagal dikirim ke backend.");
   }
+}
+
+export function getLoginServiceErrorMessage(error: unknown, fallbackMessage: string): string {
+  if (error instanceof ApiRequestError || error instanceof Error) {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }

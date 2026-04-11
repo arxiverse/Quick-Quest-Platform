@@ -1,5 +1,5 @@
 ﻿import { Surface } from "../../home.ui";
-import { giverCampaigns } from "./giver.service";
+import { giverCampaigns } from "./giver";
 
 function GiverComponent() {
   return (
@@ -26,15 +26,15 @@ function GiverComponent() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-base-content/45">Checklist Giver</p>
         <h2 className="mt-2 text-xl font-bold text-base-content">Yang perlu diberesin hari ini</h2>
         <div className="mt-5 space-y-3">
-          <label className="flex items-center gap-3 rounded-[14px] border border-base-300/70 bg-base-100 p-3">
+          <label className="flex items-center gap-3 rounded-[10px] border border-base-300/70 bg-base-100 p-3">
             <input type="checkbox" className="checkbox checkbox-sm" defaultChecked />
             <span className="text-sm font-medium text-base-content">Final cek brief pickup gudang</span>
           </label>
-          <label className="flex items-center gap-3 rounded-[14px] border border-base-300/70 bg-base-100 p-3">
+          <label className="flex items-center gap-3 rounded-[10px] border border-base-300/70 bg-base-100 p-3">
             <input type="checkbox" className="checkbox checkbox-sm" />
             <span className="text-sm font-medium text-base-content">Approve foto hasil display warung</span>
           </label>
-          <label className="flex items-center gap-3 rounded-[14px] border border-base-300/70 bg-base-100 p-3">
+          <label className="flex items-center gap-3 rounded-[10px] border border-base-300/70 bg-base-100 p-3">
             <input type="checkbox" className="checkbox checkbox-sm" />
             <span className="text-sm font-medium text-base-content">Buka slot quest malam</span>
           </label>

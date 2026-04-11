@@ -71,3 +71,15 @@ export type HomeNotification = {
   tag: string;
   time: string;
 };
+
+export {
+  HOME_ACTIVE_VIEW_STORAGE_KEY,
+  desktopNavItems,
+  getHomeViewMeta,
+  homeActionItems,
+  homeNotifications,
+  homeProfile,
+  initialHomeView,
+  mobileNavItems,
+  mobileShortcutItems,
+} from "./home.service";
