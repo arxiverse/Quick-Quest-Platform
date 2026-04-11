@@ -45,6 +45,11 @@ function getInitialActiveView(): HomeView {
     return initialHomeView;
   }
 
+  const searchParams = new URLSearchParams(window.location.search);
+  if (searchParams.get("lbPanel") === "profile" || searchParams.get("lbRunner")) {
+    return "leaderboard";
+  }
+
   const storedView = window.localStorage.getItem(HOME_ACTIVE_VIEW_STORAGE_KEY);
   return storedView && isHomeView(storedView) ? storedView : initialHomeView;
 }

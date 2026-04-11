@@ -31,6 +31,14 @@ export type ProfileQuestItem = {
   score: string;
 };
 
+export type ProfileSkillBreakdownItem = {
+  skill: string;
+  pp: string;
+  share: number;
+  trend: string;
+  toneClass: string;
+};
+
 export type ProfileLoadResult = {
   profile: HomeProfile;
   shouldRedirectToLogin: boolean;

@@ -2,7 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
 import { cn, Surface } from "../../home.ui";
-import { clearProfileSession, loadHomeProfile, type ProfileProps, type ProfileQuestItem, type ProfileStatItem } from "./profile";
+import { clearProfileSession, loadHomeProfile, type ProfileProps, type ProfileQuestItem, type ProfileSkillBreakdownItem, type ProfileStatItem } from "./profile";
 import type { HomeProfile } from "../../home";
 
 const profileStats: ProfileStatItem[] = [
@@ -47,6 +47,13 @@ const trustTimeline = [
   { label: "IN_PROGRESS", state: "active" as const },
   { label: "PENDING_CONFIRMATION", state: "idle" as const },
   { label: "RELEASED", state: "idle" as const },
+];
+
+const profileSkillBreakdown: ProfileSkillBreakdownItem[] = [
+  { skill: "Cleaning Service", pp: "2,140 PP", share: 36, trend: "+4.2%", toneClass: "bg-[#3B82F6]" },
+  { skill: "Retail Helper", pp: "1,860 PP", share: 31, trend: "+2.1%", toneClass: "bg-[#10B981]" },
+  { skill: "Delivery Support", pp: "1,240 PP", share: 21, trend: "-0.8%", toneClass: "bg-[#F59E0B]" },
+  { skill: "Tech Assist", pp: "755 PP", share: 12, trend: "+5.0%", toneClass: "bg-[#A855F7]" },
 ];
 
 function IdentityIcon({ children }: { children: ReactNode }) {
@@ -294,6 +301,28 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
             ))}
           </div>
 
+          <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">PP Breakdown</p>
+            <h3 className="mt-1 text-lg font-bold text-base-content">Distribusi Performance Point per Skill</h3>
+            <div className="mt-3 grid gap-3">
+              {profileSkillBreakdown.map((item) => (
+                <div key={item.skill} className="rounded-[10px] border border-base-300/60 bg-base-100 px-3 py-2.5">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-base-content">{item.skill}</p>
+                    <span className="text-xs font-semibold text-base-content/65">{item.pp}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-base-200">
+                    <div className={cn("h-2 rounded-full", item.toneClass)} style={{ width: `${item.share}%` }} />
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between text-xs font-medium text-base-content/65">
+                    <span>Kontribusi {item.share}%</span>
+                    <span>{item.trend}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Performance Ladder</p>
@@ -411,4 +440,3 @@ function ProfileComponent({ profile, compact = false, className = "", showMeta =
 }
 
 export default ProfileComponent;
-
