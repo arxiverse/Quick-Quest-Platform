@@ -1,53 +1,96 @@
 ﻿import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
 import { cn, Surface } from "../../home.ui";
-import { clearProfileSession, loadHomeProfile, type ProfileProps, type ProfileQuestItem, type ProfileSkillBreakdownItem, type ProfileStatItem } from "./profile";
+import {
+  clearProfileSession,
+  loadHomeProfile,
+  type ProfileProps,
+  type ProfileSkillBreakdownItem,
+  type ProfileStatItem,
+} from "./profile";
 import type { HomeProfile } from "../../home";
+
+type VerificationLayer = {
+  kycStatus: "Verified";
+  verifiedBadge: string;
+  trustTier: "Tier A";
+  riskBand: "Low Risk";
+  lastReview: string;
+};
+
+type PpIntelligenceItem = {
+  skill: string;
+  rating: number;
+  difficulty: number;
+  valueFactor: number;
+  decay: number;
+  result: number;
+  growth: string;
+};
+
+type GrowthPathItem = {
+  skill: string;
+  currentLevel: "Q1" | "Q2" | "Q3";
+  progressToNext: number;
+  requirement: string;
+  nextLevel: string;
+  note: string;
+};
+
+type PortfolioContractItem = {
+  id: string;
+  title: string;
+  mode: "Per-Individu" | "Ber-Kelompok";
+  role: string;
+  valueDelivered: string;
+  repeatGiverRate: string;
+  impact: string;
+  status: "Completed" | "In Progress" | "Pending Confirmation";
+};
+
+type ReliabilityTrendItem = {
+  metric: string;
+  d7: number;
+  d30: number;
+  target: number;
+  unit: "%" | "m";
+  preferred: "high" | "low";
+};
+
+type EconomicImpactItem = {
+  label: string;
+  value: string;
+  hint: string;
+  tone: string;
+};
+
+type SettingTabKey = "Umum" | "Notifikasi" | "Personalisasi" | "Kontrol Data" | "Security";
+
+type SettingItem = {
+  id: string;
+  label: string;
+  description: string;
+  defaultEnabled: boolean;
+  critical?: boolean;
+};
 
 const profileStats: ProfileStatItem[] = [
   { label: "Quest Selesai", value: "394", toneClass: "text-[#00D7BE]", iconKey: "quest" },
-  { label: "PP", value: "6495", toneClass: "text-[#FF27C8]", iconKey: "pp" },
-  { label: "Rank Global", value: "#1", toneClass: "text-[#6B21FF]", iconKey: "rank" },
-  { label: "Rank Nasional", value: "#1", toneClass: "text-[#00A63E]", iconKey: "nation" },
+  { label: "Total PP", value: "6,495", toneClass: "text-[#FF27C8]", iconKey: "pp" },
+  { label: "Rank Lokal", value: "#1", toneClass: "text-[#6B21FF]", iconKey: "rank" },
+  { label: "Rank Nasional", value: "#3", toneClass: "text-[#00A63E]", iconKey: "nation" },
   { label: "Akurasi", value: "99.58%", toneClass: "text-[#FF2F2F]", iconKey: "accuracy" },
-  { label: "Tingkatan", value: "Q2", toneClass: "text-[#6B21FF]", iconKey: "level" },
+  { label: "Tier Aktif", value: "Q2", toneClass: "text-[#6B21FF]", iconKey: "level" },
 ];
 
-const profileQuestItems: ProfileQuestItem[] = [
-  {
-    title: "Bersihkan Toko",
-    owner: "Neira",
-    role: "Pedagang",
-    category: "Bersih - Bersih, Tukang",
-    points: "+ 125 pp",
-    reward: "Rp. 150.000 - Rp.250.000",
-    score: "2.68",
-  },
-  {
-    title: "Membersihkan Kandang Ayam",
-    owner: "Neira",
-    role: "Pedagang",
-    category: "Bersih - Bersih, Cleaning Service",
-    points: "+ 245 pp",
-    reward: "Rp. 200.000 - Rp.350.000",
-    score: "2.97",
-  },
-];
-
-const performanceLadder = [
-  { tier: "Q1", label: "Entry / Instan", state: "complete" as const },
-  { tier: "Q2", label: "Semi-professional", state: "active" as const },
-  { tier: "Q3", label: "Professional", state: "locked" as const },
-];
-
-const trustTimeline = [
-  { label: "UNPAID", state: "done" as const },
-  { label: "LOCKED", state: "done" as const },
-  { label: "IN_PROGRESS", state: "active" as const },
-  { label: "PENDING_CONFIRMATION", state: "idle" as const },
-  { label: "RELEASED", state: "idle" as const },
-];
+const verificationLayer: VerificationLayer = {
+  kycStatus: "Verified",
+  verifiedBadge: "QQM Verified Identity",
+  trustTier: "Tier A",
+  riskBand: "Low Risk",
+  lastReview: "12 Apr 2026",
+};
 
 const profileSkillBreakdown: ProfileSkillBreakdownItem[] = [
   { skill: "Cleaning Service", pp: "2,140 PP", share: 36, trend: "+4.2%", toneClass: "bg-[#3B82F6]" },
@@ -55,6 +98,139 @@ const profileSkillBreakdown: ProfileSkillBreakdownItem[] = [
   { skill: "Delivery Support", pp: "1,240 PP", share: 21, trend: "-0.8%", toneClass: "bg-[#F59E0B]" },
   { skill: "Tech Assist", pp: "755 PP", share: 12, trend: "+5.0%", toneClass: "bg-[#A855F7]" },
 ];
+
+const ppIntelligenceRows: PpIntelligenceItem[] = [
+  { skill: "Cleaning Service", rating: 4.9, difficulty: 1.25, valueFactor: 1.2, decay: 0.95, result: 6.98, growth: "+8.6%" },
+  { skill: "Retail Helper", rating: 4.8, difficulty: 1.1, valueFactor: 1.15, decay: 0.94, result: 5.72, growth: "+6.4%" },
+  { skill: "Delivery Support", rating: 4.7, difficulty: 1.18, valueFactor: 1.05, decay: 0.92, result: 5.36, growth: "+4.9%" },
+  { skill: "Tech Assist", rating: 4.8, difficulty: 1.32, valueFactor: 1.28, decay: 0.87, result: 6.98, growth: "+9.2%" },
+];
+
+const growthPathItems: GrowthPathItem[] = [
+  {
+    skill: "Cleaning Service",
+    currentLevel: "Q2",
+    progressToNext: 72,
+    requirement: "Butuh 320 PP + completion > 96% untuk Q3.",
+    nextLevel: "Q3",
+    note: "Fokus quest high-value dengan bukti hasil lengkap.",
+  },
+  {
+    skill: "Retail Helper",
+    currentLevel: "Q2",
+    progressToNext: 63,
+    requirement: "Butuh 410 PP + repeat giver rate >= 35%.",
+    nextLevel: "Q3",
+    note: "Pertahankan rating di atas 4.8 selama 30 hari.",
+  },
+  {
+    skill: "Delivery Support",
+    currentLevel: "Q3",
+    progressToNext: 100,
+    requirement: "Level puncak tercapai, pertahankan dispute < 1.5%.",
+    nextLevel: "Maintain Q3",
+    note: "Stabilkan SLA malam dan minimalkan cancel.",
+  },
+  {
+    skill: "Tech Assist",
+    currentLevel: "Q1",
+    progressToNext: 54,
+    requirement: "Butuh 280 PP + 12 quest sukses untuk Q2.",
+    nextLevel: "Q2",
+    note: "Ambil quest troubleshooting jam 18.00 - 21.00.",
+  },
+];
+
+const portfolioContracts: PortfolioContractItem[] = [
+  {
+    id: "CTR-2026-0412-901",
+    title: "Restock Minimarket Harian",
+    mode: "Per-Individu",
+    role: "Runner",
+    valueDelivered: "Rp250.000",
+    repeatGiverRate: "42%",
+    impact: "Stok UMKM stabil sebelum jam sibuk.",
+    status: "In Progress",
+  },
+  {
+    id: "CTR-2026-0411-882",
+    title: "Survey Display Snack UMKM",
+    mode: "Per-Individu",
+    role: "Runner",
+    valueDelivered: "Rp285.000",
+    repeatGiverRate: "38%",
+    impact: "Penjualan display naik 14% (dummy insight).",
+    status: "Pending Confirmation",
+  },
+  {
+    id: "CTR-2026-0410-744",
+    title: "Bersihkan Booth Event",
+    mode: "Ber-Kelompok",
+    role: "Lead Runner",
+    valueDelivered: "Rp380.000",
+    repeatGiverRate: "51%",
+    impact: "SLA selesai 32 menit lebih cepat dari target.",
+    status: "Completed",
+  },
+  {
+    id: "CTR-2026-0409-612",
+    title: "Pickup Dokumen Kantor",
+    mode: "Per-Individu",
+    role: "Runner",
+    valueDelivered: "Rp180.000",
+    repeatGiverRate: "47%",
+    impact: "Dokumen tiba sesuai SLA tanpa dispute.",
+    status: "Completed",
+  },
+];
+
+const reliabilityTrends: ReliabilityTrendItem[] = [
+  { metric: "On-time Rate", d7: 96.8, d30: 95.9, target: 95, unit: "%", preferred: "high" },
+  { metric: "Cancel Rate", d7: 1.2, d30: 1.6, target: 2, unit: "%", preferred: "low" },
+  { metric: "Dispute Ratio", d7: 0.8, d30: 1.1, target: 1.5, unit: "%", preferred: "low" },
+  { metric: "First Response", d7: 4.2, d30: 5.1, target: 5, unit: "m", preferred: "low" },
+];
+
+const economicImpactItems: EconomicImpactItem[] = [
+  { label: "Total Upah Diterima", value: "Rp18.6jt", hint: "30 hari terakhir (runner side)", tone: "bg-[#DBEAFE]" },
+  { label: "Total Upah Dibayar", value: "Rp3.2jt", hint: "sebagai giver untuk 14 quest", tone: "bg-[#DCFCE7]" },
+  { label: "Kontribusi Fee Platform", value: "Rp1.1jt", hint: "mendukung escrow + trust engine", tone: "bg-[#FEF3C7]" },
+  { label: "Quest Komunitas Selesai", value: "342", hint: "impact sosial di ekosistem QQM", tone: "bg-[#E9D5FF]" },
+];
+
+const profileSettings: Record<SettingTabKey, SettingItem[]> = {
+  Umum: [
+    { id: "general-public-profile", label: "Profil publik terlihat", description: "Tampilkan badge, rank, dan skill utama.", defaultEnabled: true },
+    { id: "general-show-location", label: "Tampilkan wilayah", description: "Bagikan area umum tanpa alamat detail.", defaultEnabled: true },
+    { id: "general-career-headline", label: "Headline karier", description: "Aktifkan headline kontribusi QQM pada profil.", defaultEnabled: true },
+  ],
+  Notifikasi: [
+    { id: "notif-match", label: "Notif match quest", description: "Terima notifikasi saat quest cocok dengan skill aktif.", defaultEnabled: true },
+    { id: "notif-escrow", label: "Notif escrow state", description: "Update UNPAID, LOCKED, IN_PROGRESS, RELEASED.", defaultEnabled: true },
+    { id: "notif-promo", label: "Notif insight/promo", description: "Saran upah/radius dan campaign mingguan.", defaultEnabled: false },
+  ],
+  Personalisasi: [
+    { id: "personal-dark-mode", label: "Mode tampilan adaptif", description: "Sesuaikan tema berdasarkan preferensi perangkat.", defaultEnabled: true },
+    { id: "personal-language", label: "Bahasa Indonesia prioritas", description: "Gunakan copy UX utama dalam Bahasa Indonesia.", defaultEnabled: true },
+    { id: "personal-dashboard-focus", label: "Fokus skill feed", description: "Prioritaskan feed berdasarkan lane skill favorit.", defaultEnabled: true },
+  ],
+  "Kontrol Data": [
+    { id: "data-export", label: "Izinkan export data", description: "Download riwayat quest, PP ledger, dan transaksi escrow.", defaultEnabled: true },
+    { id: "data-share-analytics", label: "Share data analytics", description: "Bantu optimasi matching QQM secara anonim.", defaultEnabled: true },
+    { id: "data-retention", label: "Retensi data minimum", description: "Simpan data sensitif hanya sesuai SLA platform.", defaultEnabled: false },
+  ],
+  Security: [
+    { id: "security-2fa", label: "2FA akun", description: "Gunakan OTP saat login perangkat baru.", defaultEnabled: true, critical: true },
+    { id: "security-session-alert", label: "Alert sesi baru", description: "Kirim notifikasi jika ada login tidak dikenal.", defaultEnabled: true, critical: true },
+    { id: "security-payout-lock", label: "Payout lock protection", description: "Butuh konfirmasi tambahan saat ubah akun payout.", defaultEnabled: true, critical: true },
+  ],
+};
+
+const initialSettingState = Object.fromEntries(
+  Object.values(profileSettings)
+    .flat()
+    .map((item) => [item.id, item.defaultEnabled])
+) as Record<string, boolean>;
 
 function IdentityIcon({ children }: { children: ReactNode }) {
   return <span className="mt-0.5 inline-flex size-5 items-center justify-center text-base-content">{children}</span>;
@@ -94,7 +270,6 @@ function LocationIdentityIcon() {
     </svg>
   );
 }
-
 function StatIcon({ iconKey, className = "" }: { iconKey: ProfileStatItem["iconKey"]; className?: string }) {
   if (iconKey === "quest") {
     return (
@@ -157,62 +332,6 @@ function StatIcon({ iconKey, className = "" }: { iconKey: ProfileStatItem["iconK
   );
 }
 
-function MetricPill({ icon, children, className = "" }: { icon: ReactNode; children: ReactNode; className?: string }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex size-5 items-center justify-center">{icon}</div>
-      <span className={cn("inline-flex rounded-[10px] px-3 py-1 text-xs font-bold text-black", className)}>{children}</span>
-    </div>
-  );
-}
-
-function QuestCard({ quest }: { quest: ProfileQuestItem }) {
-  return (
-    <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-base-content sm:text-[1.75rem]">{quest.title}</h3>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="text-right">
-            <p className="text-lg font-bold text-base-content sm:text-[1.25rem]">{quest.owner}</p>
-            <p className="text-sm font-medium text-base-content/55 sm:text-base">{quest.role}</p>
-          </div>
-          <div className="size-12 rounded-[10px] bg-base-300 sm:size-[56px]" />
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:mt-5">
-        <div className="flex items-center gap-2.5 text-sm font-semibold text-base-content/80 sm:text-lg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="size-5 text-[#FF27C8] sm:size-6">
-            <path d="M11 4H6.5L4 6.5V11L12.5 19.5C13.33 20.33 14.67 20.33 15.5 19.5L19.5 15.5C20.33 14.67 20.33 13.33 19.5 12.5L11 4Z" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />
-          </svg>
-          <span>{quest.category}</span>
-        </div>
-
-        <MetricPill icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="size-5 text-[#6B21FF]"><path d="M12 19V5" strokeLinecap="round" /><path d="M6.5 10.5L12 5L17.5 10.5" strokeLinecap="round" strokeLinejoin="round" /></svg>} className="bg-[#33D8FF]">
-          {quest.points}
-        </MetricPill>
-
-        <MetricPill icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className="size-5 text-[#00A7D7]"><path d="M12 4V20" strokeLinecap="round" /><path d="M15.5 7.5C14.83 6.5 13.55 6 12 6C9.79 6 8 7.34 8 9C8 10.66 9.79 12 12 12C14.21 12 16 13.34 16 15C16 16.66 14.21 18 12 18C10.31 18 8.9 17.31 8.2 16.2" strokeLinecap="round" strokeLinejoin="round" /></svg>} className="bg-[#88FF21]">
-          {quest.reward}
-        </MetricPill>
-
-        <MetricPill icon={<svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-[#FF8A00]"><path d="M12 3.75L14.47 8.76L20 9.56L16 13.46L16.94 19L12 16.4L7.06 19L8 13.46L4 9.56L9.53 8.76L12 3.75Z" /></svg>} className="bg-[#CAFFD0]">
-          {quest.score}
-        </MetricPill>
-      </div>
-
-      <div className="mt-6 flex justify-end">
-        <button type="button" className="btn h-11 min-h-11 rounded-[10px] border-none bg-primary px-7 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-12 sm:min-h-12 sm:px-10 sm:text-base">
-          Detail
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function ProfileIdentityRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div className="flex items-start gap-2.5 text-sm text-base-content sm:text-base">
@@ -222,17 +341,39 @@ function ProfileIdentityRow({ icon, children }: { icon: ReactNode; children: Rea
   );
 }
 
+function levelClass(level: GrowthPathItem["currentLevel"]) {
+  if (level === "Q1") return "bg-[#DBEAFE] text-[#1D4ED8]";
+  if (level === "Q2") return "bg-[#FEF3C7] text-[#92400E]";
+  return "bg-[#DCFCE7] text-[#166534]";
+}
+
+function contractStatusClass(status: PortfolioContractItem["status"]) {
+  if (status === "Completed") return "bg-[#DCFCE7] text-[#166534]";
+  if (status === "In Progress") return "bg-[#DBEAFE] text-[#1D4ED8]";
+  return "bg-[#FEF3C7] text-[#92400E]";
+}
+
+function reliabilityTrendClass(isGood: boolean) {
+  return isGood ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#FECACA] text-[#991B1B]";
+}
+
+function formatReliabilityValue(value: number, unit: ReliabilityTrendItem["unit"]) {
+  return unit === "%" ? `${value.toFixed(1)}%` : `${value.toFixed(1)}m`;
+}
+
 export function ProfileContent({ profile }: { profile: HomeProfile }) {
   const navigate = useNavigate();
   const [resolvedProfile, setResolvedProfile] = useState<HomeProfile>(profile);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [activeSettingTab, setActiveSettingTab] = useState<SettingTabKey>("Umum");
+  const [settingState, setSettingState] = useState<Record<string, boolean>>(initialSettingState);
+
   useEffect(() => {
     let isCancelled = false;
+
     async function loadProfile() {
       const result = await loadHomeProfile(profile);
-      if (isCancelled) {
-        return;
-      }
+      if (isCancelled) return;
 
       if (result.shouldRedirectToLogin) {
         navigate("/login", { replace: true });
@@ -242,11 +383,25 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
       setResolvedProfile(result.profile);
       setProfileError(result.errorMessage ?? null);
     }
+
     loadProfile();
     return () => {
       isCancelled = true;
     };
   }, [navigate, profile]);
+
+  const maxPpResult = useMemo(() => Math.max(...ppIntelligenceRows.map((row) => row.result), 1), []);
+  const activeSettings = profileSettings[activeSettingTab];
+  const activeEnabledCount = activeSettings.filter((item) => settingState[item.id]).length;
+  const settingCompletion = Math.round((activeEnabledCount / activeSettings.length) * 100);
+
+  function toggleSetting(itemId: string) {
+    setSettingState((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  }
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <Surface className="p-4 sm:p-6">
@@ -259,12 +414,12 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-base-content/45">Identity</p>
                 <h2 className="mt-1 text-2xl font-bold text-base-content sm:text-[2rem]">{resolvedProfile.name}</h2>
-                <p className="mt-1 text-sm text-base-content/60">{profile.role}</p>
+                <p className="mt-1 text-sm text-base-content/60">{resolvedProfile.role}</p>
                 <div className="mt-3 space-y-2">
-                <ProfileIdentityRow icon={<UserIdentityIcon />}>{resolvedProfile.name}</ProfileIdentityRow>
-                <ProfileIdentityRow icon={<MailIdentityIcon />}>{resolvedProfile.email}</ProfileIdentityRow>
-                <ProfileIdentityRow icon={<PhoneIdentityIcon />}>{resolvedProfile.phone}</ProfileIdentityRow>
-                <ProfileIdentityRow icon={<LocationIdentityIcon />}>{resolvedProfile.address}</ProfileIdentityRow>
+                  <ProfileIdentityRow icon={<UserIdentityIcon />}>{resolvedProfile.name}</ProfileIdentityRow>
+                  <ProfileIdentityRow icon={<MailIdentityIcon />}>{resolvedProfile.email}</ProfileIdentityRow>
+                  <ProfileIdentityRow icon={<PhoneIdentityIcon />}>{resolvedProfile.phone}</ProfileIdentityRow>
+                  <ProfileIdentityRow icon={<LocationIdentityIcon />}>{resolvedProfile.address}</ProfileIdentityRow>
                 </div>
               </div>
             </div>
@@ -280,6 +435,18 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
                 Logout
               </Link>
             </div>
+          </div>
+
+          <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Verification Layer</p>
+            <h3 className="mt-1 text-lg font-bold text-base-content">KYC, Verified Badge, dan Trust Tier</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="rounded-[999px] bg-[#DCFCE7] px-2.5 py-1 text-[11px] font-bold text-[#166534]">{verificationLayer.kycStatus}</span>
+              <span className="rounded-[999px] bg-[#DBEAFE] px-2.5 py-1 text-[11px] font-bold text-[#1D4ED8]">{verificationLayer.verifiedBadge}</span>
+              <span className="rounded-[999px] bg-[#E9D5FF] px-2.5 py-1 text-[11px] font-bold text-[#6D28D9]">{verificationLayer.trustTier}</span>
+              <span className="rounded-[999px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-bold text-[#92400E]">{verificationLayer.riskBand}</span>
+            </div>
+            <p className="mt-2 text-xs text-base-content/65">Review terakhir: {verificationLayer.lastReview}</p>
           </div>
 
           {profileError ? (
@@ -300,109 +467,187 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               </div>
             ))}
           </div>
-
-          <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">PP Breakdown</p>
-            <h3 className="mt-1 text-lg font-bold text-base-content">Distribusi Performance Point per Skill</h3>
-            <div className="mt-3 grid gap-3">
-              {profileSkillBreakdown.map((item) => (
-                <div key={item.skill} className="rounded-[10px] border border-base-300/60 bg-base-100 px-3 py-2.5">
-                  <div className="mb-1.5 flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-base-content">{item.skill}</p>
-                    <span className="text-xs font-semibold text-base-content/65">{item.pp}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-base-200">
-                    <div className={cn("h-2 rounded-full", item.toneClass)} style={{ width: `${item.share}%` }} />
-                  </div>
-                  <div className="mt-1.5 flex items-center justify-between text-xs font-medium text-base-content/65">
-                    <span>Kontribusi {item.share}%</span>
-                    <span>{item.trend}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Performance Ladder</p>
-              <h3 className="mt-1 text-lg font-bold text-base-content">Progress Tingkatan QQM</h3>
-              <div className="mt-3 space-y-2.5">
-                {performanceLadder.map((item) => (
-                  <div key={item.tier} className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "inline-flex min-w-[52px] justify-center rounded-[8px] px-2.5 py-1 text-xs font-bold",
-                        item.state === "complete" && "bg-[#DCFCE7] text-[#166534]",
-                        item.state === "active" && "bg-[#DBEAFE] text-[#1D4ED8]",
-                        item.state === "locked" && "bg-base-200 text-base-content/60"
-                      )}
-                    >
-                      {item.tier}
-                    </span>
-                    <p className="text-sm font-medium text-base-content/80">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Trust Layer</p>
-              <h3 className="mt-1 text-lg font-bold text-base-content">Escrow & Session Timeline</h3>
-              <div className="mt-3 grid gap-2">
-                {trustTimeline.map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 rounded-[8px] bg-base-200/70 px-3 py-2">
-                    <span
-                      className={cn(
-                        "size-2.5 rounded-full",
-                        item.state === "done" && "bg-success",
-                        item.state === "active" && "bg-info",
-                        item.state === "idle" && "bg-base-300"
-                      )}
-                    />
-                    <p className="text-xs font-semibold tracking-[0.04em] text-base-content/75 sm:text-sm">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </Surface>
-
-      <Surface className="p-4 sm:p-6">
-        <div className="mb-4 flex items-center gap-3 sm:mb-5">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5 text-[#6B21FF] sm:size-6">
-            <rect x="5" y="4" width="14" height="16" rx="2" />
-            <path d="M9 4.5H15" strokeLinecap="round" />
-            <path d="M8 11H16" strokeLinecap="round" />
-            <path d="M8 15H13" strokeLinecap="round" />
-          </svg>
-          <h2 className="text-xl font-bold text-base-content sm:text-[1.75rem]">Quest Giver</h2>
-        </div>
-
-        <div className="space-y-4 xl:hidden">
-          {profileQuestItems.map((quest) => (
-            <QuestCard key={`${quest.title}-${quest.score}`} quest={quest} />
-          ))}
-        </div>
-
-        <div className="hidden xl:block">
-          <div className="overflow-x-auto pb-1">
-            <div className="grid grid-flow-col grid-rows-2 gap-4 [grid-auto-columns:minmax(360px,1fr)]">
-              {profileQuestItems.map((quest) => (
-                <QuestCard key={`${quest.title}-${quest.score}`} quest={quest} />
-              ))}
-            </div>
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <Surface className="p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">PP Intelligence</p>
+          <h3 className="mt-1 text-lg font-bold text-base-content">Formula Breakdown: rating x difficulty x value x decay</h3>
+          <p className="mt-1 text-xs text-base-content/65">Formula konsep: `(Rating x Difficulty x Value) x TimeDecay`</p>
+          <div className="mt-3 space-y-2.5">
+            {ppIntelligenceRows.map((row) => (
+              <div key={row.skill} className="rounded-[10px] border border-base-300/60 bg-base-100 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-base-content">{row.skill}</p>
+                  <span className="rounded-[8px] bg-[#DBEAFE] px-2 py-0.5 text-[11px] font-semibold text-[#1D4ED8]">{row.growth}</span>
+                </div>
+                <p className="mt-1 text-xs text-base-content/65">
+                  {row.rating.toFixed(1)} x {row.difficulty.toFixed(2)} x {row.valueFactor.toFixed(2)} x {row.decay.toFixed(2)}
+                </p>
+                <div className="mt-2 h-2 rounded-full bg-base-200">
+                  <div className="h-2 rounded-full bg-[#6B21FF]" style={{ width: `${Math.round((row.result / maxPpResult) * 100)}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] font-semibold text-base-content/70">PP Result Score: {row.result.toFixed(2)}</p>
+              </div>
+            ))}
           </div>
-        </div>
+        </Surface>
 
-        <div className="mt-5 flex items-center justify-end gap-3 xl:hidden">
-          <button type="button" className="btn h-11 min-h-11 rounded-[10px] border-base-300 bg-base-200 px-5 text-sm text-base-content shadow-none hover:bg-base-200">
-            Lihat Semua
-          </button>
-          <button type="button" className="btn h-11 min-h-11 rounded-[10px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90">
-            Riwayat
-          </button>
+        <Surface className="p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Growth Path Q1-Q3</p>
+          <h3 className="mt-1 text-lg font-bold text-base-content">Progress Requirement ke Level Berikutnya per Skill</h3>
+          <div className="mt-3 space-y-2.5">
+            {growthPathItems.map((item) => (
+              <div key={item.skill} className="rounded-[10px] border border-base-300/60 bg-base-100 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-base-content">{item.skill}</p>
+                  <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", levelClass(item.currentLevel))}>{item.currentLevel}</span>
+                </div>
+                <p className="mt-1 text-xs text-base-content/65">Target: {item.nextLevel}</p>
+                <div className="mt-2 h-2 rounded-full bg-base-200">
+                  <div className="h-2 rounded-full bg-[#2563EB]" style={{ width: `${item.progressToNext}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] font-semibold text-base-content/70">{item.progressToNext}% menuju {item.nextLevel}</p>
+                <p className="mt-1 text-xs text-base-content/65">{item.requirement}</p>
+                <p className="mt-1 text-xs text-base-content/55">{item.note}</p>
+              </div>
+            ))}
+          </div>
+        </Surface>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <Surface className="p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Portfolio Kontrak</p>
+          <h3 className="mt-1 text-lg font-bold text-base-content">High-impact Quest, Repeat Giver Rate, dan Value Delivered</h3>
+          <div className="mt-3 space-y-2.5">
+            {portfolioContracts.map((item) => (
+              <div key={item.id} className="rounded-[10px] border border-base-300/60 bg-base-100 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.06em] text-base-content/55">{item.id}</p>
+                    <p className="text-sm font-bold text-base-content">{item.title}</p>
+                  </div>
+                  <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", contractStatusClass(item.status))}>{item.status}</span>
+                </div>
+                <p className="mt-1 text-xs text-base-content/65">{item.mode} • {item.role}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-[8px] bg-base-200 px-2.5 py-1.5 font-semibold text-base-content/75">Value {item.valueDelivered}</div>
+                  <div className="rounded-[8px] bg-base-200 px-2.5 py-1.5 font-semibold text-base-content/75">Repeat {item.repeatGiverRate}</div>
+                </div>
+                <p className="mt-2 text-xs text-base-content/65">{item.impact}</p>
+              </div>
+            ))}
+          </div>
+        </Surface>
+
+        <Surface className="p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Reliability Trend</p>
+          <h3 className="mt-1 text-lg font-bold text-base-content">On-time, Cancel, Dispute (7D vs 30D)</h3>
+          <div className="mt-3 space-y-2.5">
+            {reliabilityTrends.map((item) => {
+              const isGood = item.preferred === "high" ? item.d7 >= item.d30 : item.d7 <= item.d30;
+              const trendLabel = isGood ? "Membaik" : "Perlu perhatian";
+              return (
+                <div key={item.metric} className="rounded-[10px] border border-base-300/60 bg-base-100 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-base-content">{item.metric}</p>
+                    <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", reliabilityTrendClass(isGood))}>{trendLabel}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-[8px] bg-base-200 px-2 py-1.5 font-semibold text-base-content/75">7D {formatReliabilityValue(item.d7, item.unit)}</div>
+                    <div className="rounded-[8px] bg-base-200 px-2 py-1.5 font-semibold text-base-content/75">30D {formatReliabilityValue(item.d30, item.unit)}</div>
+                    <div className="rounded-[8px] bg-base-200 px-2 py-1.5 font-semibold text-base-content/75">Target {formatReliabilityValue(item.target, item.unit)}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Surface>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <Surface className="p-4 sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Economic Impact</p>
+          <h3 className="mt-1 text-lg font-bold text-base-content">Dampak Ekonomi dari Aktivitas QQM</h3>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {economicImpactItems.map((item) => (
+              <div key={item.label} className="rounded-[10px] border border-base-300/70 bg-base-100 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55">{item.label}</p>
+                <p className="mt-1 text-lg font-bold text-base-content">{item.value}</p>
+                <span className={cn("mt-2 inline-flex rounded-[8px] px-2 py-0.5 text-[11px] font-semibold text-black", item.tone)}>{item.hint}</span>
+              </div>
+            ))}
+          </div>
+        </Surface>
+
+        <Surface className="p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Pengaturan Akun</p>
+              <h3 className="mt-1 text-lg font-bold text-base-content">Umum, Notifikasi, Personalisasi, Kontrol Data, Security</h3>
+            </div>
+            <span className="rounded-[8px] bg-base-200 px-2.5 py-1 text-xs font-semibold text-base-content/70">
+              Aktivasi {settingCompletion}%
+            </span>
+          </div>
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {(Object.keys(profileSettings) as SettingTabKey[]).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveSettingTab(tab)}
+                className={cn(
+                  "btn h-8 min-h-8 rounded-[999px] border-none px-3 text-xs shadow-none",
+                  activeSettingTab === tab ? "bg-primary text-primary-content" : "bg-base-200 text-base-content/75 hover:bg-base-300"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 space-y-2">
+            {activeSettings.map((item) => (
+              <label key={item.id} className="flex items-start gap-3 rounded-[10px] border border-base-300/70 bg-base-100 p-3">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm mt-0.5"
+                  checked={settingState[item.id]}
+                  onChange={() => toggleSetting(item.id)}
+                />
+                <div>
+                  <p className="text-sm font-semibold text-base-content">
+                    {item.label}{" "}
+                    {item.critical ? (
+                      <span className="rounded-[6px] bg-[#FEE2E2] px-1.5 py-0.5 text-[10px] font-bold text-[#991B1B]">Critical</span>
+                    ) : null}
+                  </p>
+                  <p className="text-xs text-base-content/65">{item.description}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </Surface>
+      </div>
+      <Surface className="p-4 sm:p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">PP Breakdown</p>
+        <h3 className="mt-1 text-lg font-bold text-base-content">Distribusi Performance Point per Skill</h3>
+        <div className="mt-3 grid gap-3">
+          {profileSkillBreakdown.map((item) => (
+            <div key={item.skill} className="rounded-[10px] border border-base-300/60 bg-base-100 px-3 py-2.5">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-base-content">{item.skill}</p>
+                <span className="text-xs font-semibold text-base-content/65">{item.pp}</span>
+              </div>
+              <div className="h-2 rounded-full bg-base-200">
+                <div className={cn("h-2 rounded-full", item.toneClass)} style={{ width: `${item.share}%` }} />
+              </div>
+              <div className="mt-1.5 flex items-center justify-between text-xs font-medium text-base-content/65">
+                <span>Kontribusi {item.share}%</span>
+                <span>{item.trend}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </Surface>
     </div>
@@ -440,3 +685,4 @@ function ProfileComponent({ profile, compact = false, className = "", showMeta =
 }
 
 export default ProfileComponent;
+

@@ -1,8 +1,168 @@
-﻿import type { ChatPreview } from "./chat";
+import type { ChatActionChip, ChatThread } from "./chat";
 
-export const chatPreviews: ChatPreview[] = [
-  { name: "Neira", message: "Cuy, lokasi udah aman. Mau lanjut task kedua?", time: "09:12", unread: true },
-  { name: "Miska", message: "Display warung udah aku rapihin, tinggal foto akhir.", time: "10:33" },
-  { name: "Giver A", message: "Budget tambahan buat pickup bisa dinaikin nggak?", time: "12:05", unread: true },
+export const chatActionChips: ChatActionChip[] = [
+  {
+    id: "send-location",
+    label: "Kirim lokasi",
+    hint: "Bagikan titik kerja realtime untuk sinkron pickup/dropoff.",
+    tone: "bg-[#DBEAFE] text-[#1D4ED8]",
+  },
+  {
+    id: "request-proof",
+    label: "Minta bukti foto",
+    hint: "Minta before/after agar approval lebih cepat.",
+    tone: "bg-[#DCFCE7] text-[#166534]",
+  },
+  {
+    id: "raise-revision",
+    label: "Ajukan revisi",
+    hint: "Tambahkan revisi singkat sebelum masuk dispute.",
+    tone: "bg-[#FEF3C7] text-[#92400E]",
+  },
+  {
+    id: "escalate-dispute",
+    label: "Escalate dispute",
+    hint: "Aktifkan mediasi jika brief dan hasil tidak sinkron.",
+    tone: "bg-[#FECACA] text-[#991B1B]",
+  },
 ];
 
+export const chatThreads: ChatThread[] = [
+  {
+    id: "chat-qst-901",
+    name: "Neira",
+    role: "Quest Runner",
+    location: "Cilandak",
+    message: "Siap, nanti aku upload before-after biar langsung bisa approve.",
+    time: "09:12",
+    unreadCount: 2,
+    status: "IN_PROGRESS",
+    context: {
+      questId: "QST-2026-0412-901",
+      mode: "Per-Individu",
+      radius: "< 2 km",
+      wageBand: "Rp150.000 - Rp250.000",
+      deadline: "12 Apr 2026, 13:30",
+      escrowState: "IN_PROGRESS",
+    },
+    timeline: [
+      { state: "LOCKED", time: "09:01", note: "Escrow terkunci, runner siap eksekusi." },
+      { state: "IN_PROGRESS", time: "09:07", note: "Runner mulai kerja di lokasi." },
+      { state: "PENDING_CONFIRMATION", time: "-", note: "Menunggu hasil akhir dan approval giver." },
+    ],
+    sla: [
+      { label: "First Response", value: "1m 12s", tone: "bg-[#DCFCE7] text-[#166534]" },
+      { label: "Avg Reply", value: "2m 48s", tone: "bg-[#DBEAFE] text-[#1D4ED8]" },
+      { label: "Last Active", value: "15 detik lalu", tone: "bg-[#E9D5FF] text-[#6D28D9]" },
+      { label: "Delay Risk", value: "Low", tone: "bg-[#DCFCE7] text-[#166534]" },
+    ],
+    trust: [
+      { label: "Verified", value: "Giver + Runner", tone: "text-[#166534]" },
+      { label: "Completion Rate", value: "97.2%", tone: "text-[#1D4ED8]" },
+      { label: "Dispute Ratio", value: "0.8%", tone: "text-[#9D174D]" },
+    ],
+    messages: [
+      { id: "m-901-1", role: "runner", text: "Lokasi udah aman, aku mulai dari area depan dulu ya.", time: "09:07" },
+      { id: "m-901-2", role: "giver", text: "Gas, lanjut. Habis itu cek stok rak kanan juga.", time: "09:08" },
+      { id: "m-901-3", role: "runner", text: "Siap, nanti aku upload before-after biar langsung bisa approve.", time: "09:12" },
+      { id: "m-901-4", role: "system", text: "System: Escrow state aktif di IN_PROGRESS.", time: "09:12" },
+    ],
+    attachments: [
+      { id: "a-901-1", type: "Before Photo", title: "Kondisi rak awal", detail: "IMG_20260412_0905.jpg", status: "Uploaded" },
+      { id: "a-901-2", type: "After Photo", title: "Rak sesudah dirapikan", detail: "Belum diunggah", status: "Pending" },
+      { id: "a-901-3", type: "Brief File", title: "Brief Restock Area A", detail: "brief-restock-v2.pdf", status: "Reviewed" },
+      { id: "a-901-4", type: "Delivery Proof", title: "Checklist item masuk", detail: "proof-scan-12apr.pdf", status: "Pending" },
+    ],
+  },
+  {
+    id: "chat-qst-882",
+    name: "Miska",
+    role: "Quest Runner",
+    location: "Depok",
+    message: "Foto final display sudah lengkap, tinggal konfirmasi release.",
+    time: "10:33",
+    unreadCount: 0,
+    status: "MATCH",
+    context: {
+      questId: "QST-2026-0412-882",
+      mode: "Per-Individu",
+      radius: ">= 2 km",
+      wageBand: "Rp200.000 - Rp300.000",
+      deadline: "12 Apr 2026, 16:00",
+      escrowState: "PENDING_CONFIRMATION",
+    },
+    timeline: [
+      { state: "LOCKED", time: "10:02", note: "Escrow lock berhasil." },
+      { state: "IN_PROGRESS", time: "10:10", note: "Runner mulai penataan display." },
+      { state: "PENDING_CONFIRMATION", time: "10:31", note: "Dokumentasi terkirim, tunggu approval." },
+    ],
+    sla: [
+      { label: "First Response", value: "2m 03s", tone: "bg-[#DCFCE7] text-[#166534]" },
+      { label: "Avg Reply", value: "4m 10s", tone: "bg-[#DBEAFE] text-[#1D4ED8]" },
+      { label: "Last Active", value: "2 menit lalu", tone: "bg-[#E9D5FF] text-[#6D28D9]" },
+      { label: "Delay Risk", value: "Medium", tone: "bg-[#FEF3C7] text-[#92400E]" },
+    ],
+    trust: [
+      { label: "Verified", value: "Runner Verified", tone: "text-[#166534]" },
+      { label: "Completion Rate", value: "95.8%", tone: "text-[#1D4ED8]" },
+      { label: "Dispute Ratio", value: "1.1%", tone: "text-[#9D174D]" },
+    ],
+    messages: [
+      { id: "m-882-1", role: "giver", text: "Kak, foto sisi kiri display bisa ditambah close-up?", time: "10:18" },
+      { id: "m-882-2", role: "runner", text: "Siap, ini aku kirim close-up produk promo.", time: "10:22" },
+      { id: "m-882-3", role: "runner", text: "Foto final display sudah lengkap, tinggal konfirmasi release.", time: "10:33" },
+      { id: "m-882-4", role: "system", text: "System: Status pindah ke PENDING_CONFIRMATION.", time: "10:33" },
+    ],
+    attachments: [
+      { id: "a-882-1", type: "Before Photo", title: "Display sebelum revisi", detail: "display-before.png", status: "Uploaded" },
+      { id: "a-882-2", type: "After Photo", title: "Display final", detail: "display-final.png", status: "Uploaded" },
+      { id: "a-882-3", type: "Brief File", title: "Planogram UMKM", detail: "planogram-weekly.pdf", status: "Reviewed" },
+      { id: "a-882-4", type: "Delivery Proof", title: "Konfirmasi stok promo", detail: "proof-stock.xlsx", status: "Reviewed" },
+    ],
+  },
+  {
+    id: "chat-qst-857",
+    name: "Giver A",
+    role: "Quest Giver",
+    location: "Kuningan",
+    message: "Budget tambahan buat pickup bisa dinaikin nggak?",
+    time: "12:05",
+    unreadCount: 1,
+    status: "RISK",
+    context: {
+      questId: "QST-2026-0412-857",
+      mode: "Ber-Kelompok",
+      radius: ">= 2 km",
+      wageBand: "Rp300.000 - Rp520.000",
+      deadline: "12 Apr 2026, 17:00",
+      escrowState: "LOCKED",
+    },
+    timeline: [
+      { state: "LOCKED", time: "11:41", note: "Escrow lock aktif untuk 3 slot runner." },
+      { state: "IN_PROGRESS", time: "-", note: "Belum start, menunggu kesepakatan update budget." },
+      { state: "DISPUTED", time: "-", note: "Akan aktif jika negosiasi gagal dan brief berubah." },
+    ],
+    sla: [
+      { label: "First Response", value: "6m 20s", tone: "bg-[#FEF3C7] text-[#92400E]" },
+      { label: "Avg Reply", value: "9m 42s", tone: "bg-[#FECACA] text-[#991B1B]" },
+      { label: "Last Active", value: "4 menit lalu", tone: "bg-[#E9D5FF] text-[#6D28D9]" },
+      { label: "Delay Risk", value: "High", tone: "bg-[#FECACA] text-[#991B1B]" },
+    ],
+    trust: [
+      { label: "Verified", value: "Giver Unverified", tone: "text-[#991B1B]" },
+      { label: "Completion Rate", value: "88.4%", tone: "text-[#1D4ED8]" },
+      { label: "Dispute Ratio", value: "3.6%", tone: "text-[#9D174D]" },
+    ],
+    messages: [
+      { id: "m-857-1", role: "giver", text: "Budget tambahan buat pickup bisa dinaikin nggak?", time: "12:05" },
+      { id: "m-857-2", role: "system", text: "System: Brief berubah setelah escrow lock. Sarankan revisi formal.", time: "12:06" },
+      { id: "m-857-3", role: "runner", text: "Bisa, tapi mohon update nominal dan scope biar aman buat semua runner.", time: "12:08" },
+    ],
+    attachments: [
+      { id: "a-857-1", type: "Before Photo", title: "Kondisi gudang awal", detail: "gudang-before.jpg", status: "Uploaded" },
+      { id: "a-857-2", type: "After Photo", title: "Foto akhir pekerjaan", detail: "Belum ada upload", status: "Pending" },
+      { id: "a-857-3", type: "Brief File", title: "Brief Pickup Gudang", detail: "pickup-brief-draft.docx", status: "Pending" },
+      { id: "a-857-4", type: "Delivery Proof", title: "Tanda terima barang", detail: "Belum tersedia", status: "Pending" },
+    ],
+  },
+];
