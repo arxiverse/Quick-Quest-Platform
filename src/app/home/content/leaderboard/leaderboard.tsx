@@ -64,6 +64,18 @@ function trendLabel(value: number) {
   return "Tetap";
 }
 
+function Sparkline({ data, datakey, color }: { data: any[]; datakey: string; color: string }) {
+  if (!data || data.length === 0) return null;
+  const min = Math.min(...data.map((d) => d[datakey]));
+  const max = Math.max(...data.map((d) => d[datakey]));
+  return (
+    <LineChart width={56} height={20} data={data}>
+      <YAxis reversed domain={[max + 1, Math.max(1, min - 1)]} hide />
+      <Line type="monotone" dataKey={datakey} stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+    </LineChart>
+  );
+}
+
 function isScope(value: string | null): value is LeaderboardScope {
   return !!value && leaderboardScopes.some((scope) => scope === value);
 }
@@ -134,7 +146,7 @@ function LeaderboardComponent() {
   const activeGroup = useMemo(() => leaderboardGroups.find((group) => group.scope === scope) ?? leaderboardGroups[0], [scope]);
   const allRows = useMemo(() => leaderboardGroups.flatMap((group) => group.rows), []);
   const periodRows = useMemo(() => buildRowsByPeriod(activeGroup.rows, period), [activeGroup.rows, period]);
-  const skillOptions = useMemo(() => [ALL_SKILL, ...new Set(periodRows.map((row) => row.primarySkill))], [periodRows]);
+  const skillOptions = useMemo(() => [ALL_SKILL, ...Array.from(new Set(periodRows.map((row) => row.primarySkill)))], [periodRows]);
   const metrics = useMemo(() => leaderboardSummaryMetricMap[period], [period]);
   const insights = useMemo(() => leaderboardInsightByPeriod[period], [period]);
 
@@ -266,22 +278,43 @@ function LeaderboardComponent() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((row) => (
-                  <tr key={`${scope}-${period}-${row.id}`} onClick={() => setSelectedRunnerId(row.id)} className={cn("cursor-pointer", selectedRunnerId === row.id && "bg-primary/10")}>
-                    <td className="font-semibold">#{row.rank}</td>
-                    <td className="font-semibold">{row.name}</td>
-                    <td className="whitespace-normal">{row.city}</td>
-                    <td className="whitespace-normal">{row.primarySkill}</td>
-                    <td>
-                      <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", levelTone(row.level))}>{row.level}</span>
-                    </td>
-                    <td>{row.ppTotal}</td>
-                    <td>{row.completionRate}</td>
-                    <td>{row.disputeRatio}</td>
-                    <td>
-                      <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", trendTone(row.trend))}>{trendLabel(row.trend)}</span>
-                    </td>
-                    <td>
+                {filteredRows.map((row) => {
+                  const profile = leaderboardTopProfiles.find((p) => p.id === row.id);
+                  const badges = profile?.badges ?? [];
+                  const historySource = leaderboardRankHistories.find((entry) => entry.runnerId === row.id)?.points ?? [];
+                  const rowHistory = buildHistoryByPeriod(historySource, period);
+                  const sparklineColor = row.trend > 0 ? "#166534" : row.trend < 0 ? "#991B1B" : "#A046FF";
+
+                  return (
+                    <tr key={`${scope}-${period}-${row.id}`} onClick={() => setSelectedRunnerId(row.id)} className={cn("cursor-pointer", selectedRunnerId === row.id && "bg-primary/10")}>
+                      <td className="font-semibold">#{row.rank}</td>
+                      <td className="font-semibold">
+                        <div className="flex items-center gap-1.5">
+                          {row.name}
+                          {badges.length > 0 && (
+                            <span className="tooltip tooltip-right font-normal" data-tip={badges.join(", ")}>
+                              <span className="flex size-4 cursor-help items-center justify-center rounded-full bg-gradient-to-tr from-[#A046FF] to-[#38BDF8] text-[10px] text-white shadow-sm">
+                                🌟
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="whitespace-normal">{row.city}</td>
+                      <td className="whitespace-normal">{row.primarySkill}</td>
+                      <td>
+                        <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", levelTone(row.level))}>{row.level}</span>
+                      </td>
+                      <td>{row.ppTotal}</td>
+                      <td>{row.completionRate}</td>
+                      <td>{row.disputeRatio}</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <Sparkline data={rowHistory} datakey={scope} color={sparklineColor} />
+                          <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", trendTone(row.trend))}>{trendLabel(row.trend)}</span>
+                        </div>
+                      </td>
+                      <td>
                       <button
                         type="button"
                         className="btn btn-xs h-7 min-h-7 rounded-[7px] border-none bg-primary text-primary-content"
@@ -294,19 +327,41 @@ function LeaderboardComponent() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>
 
           <div className="mt-3 space-y-2 md:hidden">
-            {filteredRows.map((row) => (
-              <div key={`${scope}-${period}-${row.id}-mobile`} className="rounded-[10px] border border-base-300/70 bg-base-100 p-3">
-                <p className="text-sm font-semibold">#{row.rank} {row.name}</p>
-                <p className="text-xs text-base-content/60">{row.city} | {row.primarySkill} | {row.ppTotal} PP</p>
-                <button type="button" className="btn btn-sm mt-2 h-8 min-h-8 rounded-[8px] border-none bg-primary px-3 text-xs text-primary-content" onClick={() => openProfilePanel(row.id)}>View Profile</button>
-              </div>
-            ))}
+            {filteredRows.map((row) => {
+              const profile = leaderboardTopProfiles.find((p) => p.id === row.id);
+              const badges = profile?.badges ?? [];
+              const historySource = leaderboardRankHistories.find((entry) => entry.runnerId === row.id)?.points ?? [];
+              const rowHistory = buildHistoryByPeriod(historySource, period);
+              const sparklineColor = row.trend > 0 ? "#166534" : row.trend < 0 ? "#991B1B" : "#A046FF";
+
+              return (
+                <div key={`${scope}-${period}-${row.id}-mobile`} className="rounded-[10px] border border-base-300/70 bg-base-100 p-3">
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-semibold">#{row.rank} {row.name}</p>
+                    {badges.length > 0 && (
+                      <span className="flex size-4 items-center justify-center rounded-full bg-gradient-to-tr from-[#A046FF] to-[#38BDF8] text-[10px] text-white shadow-sm">
+                        🌟
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-base-content/60">{row.city} | {row.primarySkill} | {row.ppTotal} PP</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       <Sparkline data={rowHistory} datakey={scope} color={sparklineColor} />
+                       <span className={cn("rounded-[8px] px-2 py-0.5 text-[11px] font-semibold", trendTone(row.trend))}>{trendLabel(row.trend)}</span>
+                    </div>
+                    <button type="button" className="btn btn-sm h-8 min-h-8 rounded-[8px] border-none bg-primary px-3 text-xs text-primary-content" onClick={() => openProfilePanel(row.id)}>View Profile</button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Surface>
 

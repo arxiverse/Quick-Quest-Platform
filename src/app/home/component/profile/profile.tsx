@@ -1,4 +1,4 @@
-﻿import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
 import { cn, Surface } from "../../home.ui";
@@ -10,6 +10,25 @@ import {
   type ProfileStatItem,
 } from "./profile";
 import type { HomeProfile } from "../../home";
+import { EditProfile } from "./page/edit-profile";
+import { KycSettlement } from "./page/kyc-settlement";
+
+type ProfileSubView = 
+  | { view: "EditProfile" }
+  | { view: "KycSettlement" };
+
+const PROFILE_SUBVIEW_STORAGE_KEY = "nvrs-qqm-profile-subview-v1";
+
+function resolveInitialSubView(): ProfileSubView | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PROFILE_SUBVIEW_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as ProfileSubView;
+  } catch {
+    return null;
+  }
+}
 
 type VerificationLayer = {
   kycStatus: "Verified";
@@ -97,6 +116,13 @@ const profileSkillBreakdown: ProfileSkillBreakdownItem[] = [
   { skill: "Retail Helper", pp: "1,860 PP", share: 31, trend: "+2.1%", toneClass: "bg-[#10B981]" },
   { skill: "Delivery Support", pp: "1,240 PP", share: 21, trend: "-0.8%", toneClass: "bg-[#F59E0B]" },
   { skill: "Tech Assist", pp: "755 PP", share: 12, trend: "+5.0%", toneClass: "bg-[#A855F7]" },
+];
+
+const profileBadges = [
+  { id: "b1", label: "Night Owl", type: "gold", icon: "🦉", desc: "Selesai 50 quest malam" },
+  { id: "b2", label: "Elite Runner", type: "mythic", icon: "⚡", desc: "Top 5% Regional" },
+  { id: "b3", label: "Fast Responder", type: "silver", icon: "🚀", desc: "Respon < 5 menit" },
+  { id: "b4", label: "Trusted Pro", type: "bronze", icon: "🤝", desc: "Rating 4.9+" },
 ];
 
 const ppIntelligenceRows: PpIntelligenceItem[] = [
@@ -367,6 +393,7 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [activeSettingTab, setActiveSettingTab] = useState<SettingTabKey>("Umum");
   const [settingState, setSettingState] = useState<Record<string, boolean>>(initialSettingState);
+  const [subView, setSubView] = useState<ProfileSubView | null>(resolveInitialSubView);
 
   useEffect(() => {
     let isCancelled = false;
@@ -390,6 +417,15 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
     };
   }, [navigate, profile]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (subView) {
+      window.localStorage.setItem(PROFILE_SUBVIEW_STORAGE_KEY, JSON.stringify(subView));
+    } else {
+      window.localStorage.removeItem(PROFILE_SUBVIEW_STORAGE_KEY);
+    }
+  }, [subView]);
+
   const maxPpResult = useMemo(() => Math.max(...ppIntelligenceRows.map((row) => row.result), 1), []);
   const activeSettings = profileSettings[activeSettingTab];
   const activeEnabledCount = activeSettings.filter((item) => settingState[item.id]).length;
@@ -400,6 +436,14 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
       ...prev,
       [itemId]: !prev[itemId],
     }));
+  }
+
+  if (subView?.view === "EditProfile") {
+    return <EditProfile onBack={() => setSubView(null)} />;
+  }
+  
+  if (subView?.view === "KycSettlement") {
+    return <KycSettlement onBack={() => setSubView(null)} />;
   }
 
   return (
@@ -424,7 +468,7 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               </div>
             </div>
             <div className="flex shrink-0 flex-col gap-2 lg:min-w-[11rem]">
-              <button type="button" className="btn h-10 min-h-10 rounded-[8px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-11 sm:min-h-11 sm:px-6">
+              <button type="button" onClick={() => setSubView({ view: "EditProfile" })} className="btn h-10 min-h-10 rounded-[8px] border-none bg-primary px-5 text-sm text-primary-content shadow-none hover:opacity-90 sm:h-11 sm:min-h-11 sm:px-6">
                 Ubah
               </button>
               <Link
@@ -447,6 +491,24 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               <span className="rounded-[999px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-bold text-[#92400E]">{verificationLayer.riskBand}</span>
             </div>
             <p className="mt-2 text-xs text-base-content/65">Review terakhir: {verificationLayer.lastReview}</p>
+          </div>
+
+          <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Trophy & Badges</p>
+            <h3 className="mt-1 text-lg font-bold text-base-content">Pencapaian Rank & Etos Kerja</h3>
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {profileBadges.map((badge) => (
+                <div key={badge.id} className="group relative flex flex-col items-center gap-2 rounded-[10px] border border-base-300/50 bg-base-200/50 p-3 text-center transition-all hover:bg-base-200">
+                  <div className={cn("flex size-10 items-center justify-center rounded-full text-lg shadow-sm border", badge.type === "mythic" ? "bg-gradient-to-tr from-[#A046FF] to-[#38BDF8] text-white border-transparent" : badge.type === "gold" ? "bg-gradient-to-tr from-[#F59E0B] to-[#FBBF24] text-white border-transparent" : badge.type === "silver" ? "bg-gradient-to-tr from-[#94A3B8] to-[#CBD5E1] text-white border-transparent" : "bg-[#B45309] text-white border-transparent")}>
+                    {badge.icon}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-base-content">{badge.label}</p>
+                    <p className="mt-0.5 text-[9px] text-base-content/65">{badge.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {profileError ? (
@@ -567,8 +629,11 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <Surface className="p-4 sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Economic Impact</p>
+        <Surface className="p-4 sm:p-5 flex flex-col">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">Economic Impact</p>
+            <button onClick={() => setSubView({ view: "KycSettlement" })} type="button" className="btn btn-xs h-7 min-h-7 border-none bg-success px-4 text-[10px] font-bold text-white shadow hover:opacity-90">Tarik Saldo</button>
+          </div>
           <h3 className="mt-1 text-lg font-bold text-base-content">Dampak Ekonomi dari Aktivitas QQM</h3>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {economicImpactItems.map((item) => (

@@ -1,4 +1,5 @@
-﻿import type { ComponentType } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import type { ComponentType } from "react";
 import type { HomeIconKey } from "./home";
 
 export type HomeIconProps = {
@@ -177,6 +178,15 @@ export function ChevronDownIcon({ className }: HomeIconProps) {
   );
 }
 
+export function ArrowLeftIcon({ className }: HomeIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M19 12H5" strokeLinecap="round" />
+      <path d="M10.5 17.5L5 12L10.5 6.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export const homeIconRegistry: Record<HomeIconKey, ComponentType<HomeIconProps>> = {
   home: HomeIcon,
   analysis: AnalysisIcon,
@@ -197,3 +207,4 @@ export const homeIconRegistry: Record<HomeIconKey, ComponentType<HomeIconProps>>
   dollar: DollarIcon,
   star: StarIcon,
 };
+

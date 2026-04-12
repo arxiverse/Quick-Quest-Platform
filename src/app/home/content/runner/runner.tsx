@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { cn, Surface } from "../../home.ui";
 import {
@@ -9,6 +10,7 @@ import {
   runnerReliabilityBadges,
   runnerSkillInventory,
 } from "./runner";
+import { PartyLobbyRoom } from "./page/party-lobby-room";
 
 type TooltipRow = {
   color?: string;
@@ -71,7 +73,94 @@ function memberStatusClass(status: "Ready" | "On Quest" | "Standby" | "Need Brie
   return "bg-[#FECACA] text-[#991B1B]";
 }
 
+const runnerOpenParties = [
+  { id: "P-101", title: "Event Organizer Staff", giver: "Neo Comm", slotFilled: 3, slotTotal: 5, reward: "Rp 350.000", match: 92 },
+  { id: "P-102", title: "Bongkar Muat Gudang", giver: "Sinar Jaya", slotFilled: 1, slotTotal: 4, reward: "Rp 210.000", match: 78 },
+];
+
+type RunnerSubView = { view: "PartyLobbyRoom"; payload: { partyId: string } };
+
+const RUNNER_SUBVIEW_STORAGE_KEY = "nvrs-qqm-runner-subview-v1";
+
+function resolveInitialSubView(): RunnerSubView | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(RUNNER_SUBVIEW_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as RunnerSubView;
+  } catch {
+    return null;
+  }
+}
+
+function RunnerOpenPartiesWidget({ onJoinParty }: { onJoinParty?: (id: string) => void }) {
+  return (
+    <Surface className="p-4 sm:p-5 border border-[#A046FF]/30 bg-gradient-to-br from-[#A046FF]/5 to-transparent">
+       <div className="mb-2 flex items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-full bg-[#A046FF] text-[12px] text-white shadow-sm shadow-[#A046FF]/40">🎉</span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A046FF]">Party Lobbies</p>
+            <h2 className="mt-0.5 text-base font-bold text-base-content leading-tight">Group Quests Terbuka di Sekitarmu</h2>
+          </div>
+       </div>
+       <div className="mt-3 grid gap-3 sm:grid-cols-2">
+         {runnerOpenParties.map((party) => {
+           const slots = Array.from({ length: party.slotTotal }, (_, i) => i < party.slotFilled);
+           return (
+             <div key={party.id} className="rounded-[10px] border border-base-300 bg-base-100 p-3 shadow-sm hover:border-[#A046FF]/50 transition-colors">
+               <div className="flex items-center justify-between gap-2">
+                 <div>
+                   <p className="text-sm font-bold text-base-content">{party.title}</p>
+                   <p className="text-[11px] font-semibold text-base-content/60">{party.giver} • Match {party.match}%</p>
+                 </div>
+                 <span className="rounded bg-[#DCFCE7] px-2 py-0.5 text-[11px] font-bold text-[#166534]">{party.reward}</span>
+               </div>
+               
+               <div className="mt-3 flex items-center justify-between gap-2 border-t border-base-200 pt-3">
+                 <div className="flex -space-x-2">
+                   {slots.map((filled, i) => (
+                      <div key={i} className="relative transition-all">
+                        {filled ? (
+                          <div className="flex size-7 items-center justify-center rounded-full bg-gradient-to-tr from-[#A046FF] to-[#38BDF8] text-[9px] font-bold text-white shadow ring-2 ring-base-100">
+                            R{i + 1}
+                          </div>
+                        ) : (
+                          <div className="flex size-7 items-center justify-center rounded-full border border-dashed border-base-300 bg-base-200 text-[10px] text-base-content/40 ring-1 ring-base-100">
+                            +
+                          </div>
+                        )}
+                      </div>
+                   ))}
+                   <div className="ml-3 pl-3 text-[10px] font-semibold text-base-content/60 self-center">
+                     {party.slotFilled}/{party.slotTotal} Ready
+                   </div>
+                 </div>
+                 <button type="button" onClick={() => onJoinParty?.(party.id)} className="btn h-7 min-h-7 border-none bg-[#A046FF] px-3 py-0 text-[10px] font-bold text-white shadow hover:opacity-90">Join Lobby</button>
+               </div>
+             </div>
+           );
+         })}
+       </div>
+    </Surface>
+  );
+}
+
 function RunnerComponent() {
+  const [subView, setSubView] = useState<RunnerSubView | null>(resolveInitialSubView);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (subView) {
+      window.localStorage.setItem(RUNNER_SUBVIEW_STORAGE_KEY, JSON.stringify(subView));
+    } else {
+      window.localStorage.removeItem(RUNNER_SUBVIEW_STORAGE_KEY);
+    }
+  }, [subView]);
+
+  if (subView?.view === "PartyLobbyRoom") {
+    return <PartyLobbyRoom partyId={subView.payload.partyId} onBack={() => setSubView(null)} />;
+  }
+
   return (
     <div className="min-w-0 space-y-4">
       <Surface className="p-4 sm:p-5">
@@ -93,6 +182,8 @@ function RunnerComponent() {
           </Surface>
         ))}
       </div>
+
+      <RunnerOpenPartiesWidget onJoinParty={(id) => setSubView({ view: "PartyLobbyRoom", payload: { partyId: id } })} />
 
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Surface className="p-4 sm:p-5">

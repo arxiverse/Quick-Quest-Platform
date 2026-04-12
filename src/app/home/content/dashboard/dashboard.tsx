@@ -16,8 +16,10 @@ import {
   type DashboardQuestItem,
   type DashboardQuickFilterMenu,
 } from "./dashboard";
+import { QuestDetail } from "./page/quest-detail";
 
 const DASHBOARD_FILTER_STORAGE_KEY = "nvrs-qqm-dashboard-live-filters-v1";
+const DASHBOARD_SUBVIEW_STORAGE_KEY = "nvrs-qqm-dashboard-subview-v1";
 const PP_FORMULA_TOOLTIP = "PP = (Rating x Difficulty x Value) x TimeDecay";
 const ESCROW_FLOW: DashboardQuestItem["escrowState"][] = ["UNPAID", "LOCKED", "IN_PROGRESS", "PENDING_CONFIRMATION", "RELEASED"];
 
@@ -57,6 +59,22 @@ function resolveInitialLiveFilters(menus: DashboardQuickFilterMenu[]): Dashboard
     return normalized;
   } catch {
     return defaults;
+  }
+}
+
+type DashboardSubView = {
+  view: "QuestDetail";
+  payload: { id: string };
+};
+
+function resolveInitialSubView(): DashboardSubView | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DASHBOARD_SUBVIEW_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as DashboardSubView;
+  } catch {
+    return null;
   }
 }
 
@@ -118,7 +136,102 @@ function EscrowTracker({ state }: { state: DashboardQuestItem["escrowState"] }) 
   );
 }
 
-function QuestCard({ quest, featured = false }: { quest: DashboardQuestItem; featured?: boolean }) {
+function RadarMapWidget({ activeGeoScope }: { activeGeoScope: any }) {
+  const [radius, setRadius] = useState(1);
+  
+  useEffect(() => {
+    // Simulator radar expand 1km -> 2km
+    const timer = window.setInterval(() => {
+      setRadius((prev) => (prev === 1 ? 2 : 1));
+    }, 3500);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="mb-4 flex flex-col gap-3 rounded-[12px] border border-base-300/70 bg-base-100 p-3.5 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-base-content/50">Live Sonar Mapping</p>
+           <p className="text-sm font-bold text-base-content">Radius Aktif: {radius} km</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {activeGeoScope.hotZones.map((zone: string) => (
+             <span key={zone} className="rounded-[8px] bg-error/10 px-2 py-0.5 text-[10px] font-bold text-error ring-1 ring-error/20 shadow-sm">{zone} 🔥</span>
+          ))}
+          <span className="rounded-[999px] bg-base-200 px-2.5 py-1 text-[11px] font-semibold text-base-content/75">{activeGeoScope.avgEta}</span>
+        </div>
+      </div>
+      
+      <div className="relative mt-2 flex h-56 sm:h-72 w-full items-center justify-center overflow-hidden rounded-[12px] border border-[#38BDF8]/20 bg-[#0F172A] shadow-inner">
+         {/* Grid Background */}
+         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#38BDF8 1px, transparent 1px), linear-gradient(90deg, #38BDF8 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+         <div className="absolute inset-0 opacity-40 bg-gradient-to-t from-[#0F172A] to-transparent" />
+         
+         {/* Legend */}
+         <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1.5 rounded-[8px] bg-[#0F172A]/80 border border-slate-700 p-2 backdrop-blur-md">
+            <div className="flex items-center gap-1.5">
+               <div className="size-2 rounded-full bg-white" />
+               <span className="text-[9px] font-semibold text-slate-300">Target Lokasi (Giver)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+               <div className="size-2 rounded-full bg-[#10B981] shadow-[0_0_5px_#10B981]" />
+               <span className="text-[9px] font-semibold text-slate-300">Top Runner (1km)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+               <div className="size-2 rounded-full bg-[#F59E0B] shadow-[0_0_5px_#F59E0B]" />
+               <span className="text-[9px] font-semibold text-slate-300">Backup Runner (2km)</span>
+            </div>
+         </div>
+
+         {/* Radar Engine */}
+         <div className="relative flex items-center justify-center">
+           {/* Center Node */}
+           <div className="relative z-10 flex size-5 items-center justify-center rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.6)]">
+             <div className="size-2 rounded-full bg-primary" />
+           </div>
+
+           {/* 1 KM Pulse */}
+           <div className={cn("absolute flex items-center justify-center rounded-full border border-[#A046FF] transition-all duration-1000 ease-in-out", radius >= 1 ? "size-32 bg-[#A046FF]/10 ring-4 ring-[#A046FF]/20" : "size-0 opacity-0")}>
+             {radius === 1 && <div className="absolute inset-0 animate-ping rounded-full bg-[#A046FF]/50" style={{ animationDuration: '2s' }} />}
+           </div>
+
+           {/* 2 KM Pulse */}
+           <div className={cn("absolute flex items-center justify-center rounded-full border border-[#38BDF8] transition-all duration-1000 ease-in-out", radius >= 2 ? "size-52 sm:size-64 bg-[#38BDF8]/10 ring-4 ring-[#38BDF8]/10" : "size-32 opacity-0")}>
+             {radius === 2 && <div className="absolute inset-0 animate-ping rounded-full bg-[#38BDF8]/40" style={{ animationDuration: '3s' }} />}
+           </div>
+           
+           {/* Mapped Entities */}
+           <div className="absolute -top-8 left-10 size-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] transition-opacity duration-[1500ms]" style={{ opacity: radius >= 1 ? 1 : 0 }} />
+           <div className="absolute bottom-6 right-10 size-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] transition-opacity duration-[1500ms] delay-300" style={{ opacity: radius >= 1 ? 1 : 0 }} />
+           <div className="absolute top-4 -left-12 size-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] transition-opacity duration-[1500ms] delay-150" style={{ opacity: radius >= 1 ? 1 : 0 }} />
+           
+           <div className="absolute -top-20 -left-16 size-2.5 rounded-full bg-[#F59E0B] shadow-[0_0_8px_#F59E0B] transition-opacity duration-[1500ms]" style={{ opacity: radius >= 2 ? 1 : 0 }} />
+           <div className="absolute bottom-24 -right-24 size-2.5 rounded-full bg-[#F59E0B] shadow-[0_0_8px_#F59E0B] transition-opacity duration-[1500ms] delay-300" style={{ opacity: radius >= 2 ? 1 : 0 }} />
+           <div className="absolute -bottom-16 left-8 size-2.5 rounded-full bg-[#38BDF8] shadow-[0_0_8px_#38BDF8] transition-opacity duration-[1500ms] delay-500" style={{ opacity: radius >= 2 ? 1 : 0 }} />
+         </div>
+      </div>
+      
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55">Estimasi Kandidat</p>
+          <div className="mt-1 flex items-baseline gap-2">
+             <p className="text-xl font-bold text-base-content">{activeGeoScope.estimatedRunners}</p>
+             <span className="text-xs font-semibold text-[#10B981]">Runner valid siap meluncur</span>
+          </div>
+        </div>
+        <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55">Runner Status</p>
+          <div className="mt-1 flex items-baseline gap-2">
+             <p className="text-xl font-bold text-base-content">{activeGeoScope.activeRunners}</p>
+             <span className="text-xs font-semibold text-[#6B21FF]">Aktif dalam radius ini</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuestCard({ quest, featured = false, onDetailClick }: { quest: DashboardQuestItem; featured?: boolean; onDetailClick?: () => void }) {
   const slotProgress = Math.round((quest.slotFilled / quest.slotTotal) * 100);
 
   return (
@@ -191,7 +304,7 @@ function QuestCard({ quest, featured = false }: { quest: DashboardQuestItem; fea
       </div>
 
       <div className={cn("mt-6 flex justify-end", featured ? "sm:mt-8" : "mt-5")}>
-        <button type="button" className={cn("btn border-none bg-primary text-primary-content shadow-none hover:opacity-90", featured ? "h-12 min-h-12 rounded-[8px] px-10 text-lg" : "h-10 min-h-10 rounded-[8px] px-6 text-sm sm:h-11 sm:min-h-11")}>
+        <button type="button" onClick={onDetailClick} className={cn("btn border-none bg-primary text-primary-content shadow-none hover:opacity-90", featured ? "h-12 min-h-12 rounded-[8px] px-10 text-lg" : "h-10 min-h-10 rounded-[8px] px-6 text-sm sm:h-11 sm:min-h-11")}>
           Detail
         </button>
       </div>
@@ -202,6 +315,7 @@ function QuestCard({ quest, featured = false }: { quest: DashboardQuestItem; fea
 function DashboardComponent() {
   const [liveFilters, setLiveFilters] = useState<DashboardLiveFilterState>(() => resolveInitialLiveFilters(dashboardQuickFilterMenus));
   const [leaderboardScope, setLeaderboardScope] = useState<DashboardLeaderboardScope>("Lokal");
+  const [subView, setSubView] = useState<DashboardSubView | null>(resolveInitialSubView);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -209,6 +323,19 @@ function DashboardComponent() {
     }
     window.localStorage.setItem(DASHBOARD_FILTER_STORAGE_KEY, JSON.stringify(liveFilters));
   }, [liveFilters]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (subView) {
+      window.localStorage.setItem(DASHBOARD_SUBVIEW_STORAGE_KEY, JSON.stringify(subView));
+    } else {
+      window.localStorage.removeItem(DASHBOARD_SUBVIEW_STORAGE_KEY);
+    }
+  }, [subView]);
+
+  if (subView?.view === "QuestDetail") {
+    return <QuestDetail questId={subView.payload.id} onBack={() => setSubView(null)} />;
+  }
 
   const dashboardKpis = [
     { label: "Quest Aktif", value: "24", hint: "7 prioritas", tone: "bg-[#DBEAFE]" },
@@ -463,29 +590,7 @@ function DashboardComponent() {
           })}
         </div>
 
-        <div className="mb-4 rounded-[12px] border border-base-300/70 bg-base-100 p-3.5 sm:p-4">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-base-content/50">Geo Scope Widget</p>
-              <p className="text-sm font-bold text-base-content">Radius Aktif: {activeGeoScope.radiusLabel}</p>
-            </div>
-            <span className="rounded-[999px] bg-base-200 px-2.5 py-1 text-[11px] font-semibold text-base-content/75">{activeGeoScope.avgEta}</span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55">Estimasi Kandidat</p>
-              <p className="text-sm font-bold text-base-content">{activeGeoScope.estimatedRunners}</p>
-            </div>
-            <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55">Runner Aktif</p>
-              <p className="text-sm font-bold text-base-content">{activeGeoScope.activeRunners}</p>
-            </div>
-            <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2 sm:col-span-2 lg:col-span-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55">Hot Zone</p>
-              <p className="text-sm font-bold text-base-content">{activeGeoScope.hotZones.join(", ")}</p>
-            </div>
-          </div>
-        </div>
+        <RadarMapWidget activeGeoScope={activeGeoScope} />
 
         {isQuestEmpty ? (
           <div className="mb-4 rounded-[12px] border border-dashed border-base-300 bg-base-100 p-4 sm:p-5">
@@ -511,7 +616,7 @@ function DashboardComponent() {
 
         <div className="space-y-4 xl:hidden">
           {filteredQuestItems.map((quest, index) => (
-            <QuestCard key={quest.title} quest={quest} featured={index === 0} />
+            <QuestCard key={quest.title} quest={quest} featured={index === 0} onDetailClick={() => setSubView({ view: "QuestDetail", payload: { id: quest.title } })} />
           ))}
         </div>
 
@@ -519,7 +624,7 @@ function DashboardComponent() {
           <div className="overflow-x-auto pb-1">
             <div className="grid grid-flow-col grid-rows-2 gap-4 [grid-auto-columns:minmax(340px,1fr)]">
               {filteredQuestItems.map((quest) => (
-                <QuestCard key={quest.title} quest={quest} />
+                <QuestCard key={quest.title} quest={quest} onDetailClick={() => setSubView({ view: "QuestDetail", payload: { id: quest.title } })} />
               ))}
             </div>
           </div>

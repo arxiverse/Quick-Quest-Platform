@@ -12,6 +12,8 @@ import {
   type GiverBroadcastStatus,
   type GiverCandidate,
 } from "./giver";
+import { QuestEditor } from "./page/quest-editor";
+import { CandidateReview } from "./page/candidate-review";
 
 type BroadcastFilter = "ALL" | GiverBroadcastStatus;
 type CandidateSort = "MATCH" | "DISTANCE" | "ETA";
@@ -71,6 +73,71 @@ function resolveRadiusRuntime(quest: GiverBroadcastQuest, tickSeconds: number) {
   };
 }
 
+type GiverSubView =
+  | { view: "QuestEditor" }
+  | { view: "CandidateReview"; payload: { id: string } };
+
+const GIVER_SUBVIEW_STORAGE_KEY = "nvrs-qqm-giver-subview-v1";
+
+function resolveInitialSubView(): GiverSubView | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(GIVER_SUBVIEW_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as GiverSubView;
+  } catch {
+    return null;
+  }
+}
+
+function PartyLobbyWidget({ slotFilled, slotTotal, status, candidates }: { slotFilled: number; slotTotal: number; status: GiverBroadcastStatus; candidates: number }) {
+  const slots = Array.from({ length: slotTotal }, (_, i) => i < slotFilled);
+  const canStart = slotFilled >= slotTotal;
+  
+  return (
+    <div className="mt-3 rounded-[9px] border border-[#A046FF]/30 bg-gradient-to-br from-[#A046FF]/5 to-transparent p-3 ring-1 ring-inset ring-white/10 shadow-inner">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className="flex size-4 items-center justify-center rounded-full bg-[#A046FF] text-[8px] text-white shadow-sm shadow-[#A046FF]/40">🎉</span>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#A046FF]">Party Lobby</p>
+        </div>
+        <span className="rounded-full bg-base-100 px-2 py-0.5 text-[10px] font-bold text-base-content/70 shadow-sm">{slotFilled}/{slotTotal} Ready</span>
+      </div>
+      
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {slots.map((filled, i) => (
+          <div key={i} className="relative transition-all hover:-translate-y-0.5">
+             {filled ? (
+               <div className="flex size-9 sm:size-10 items-center justify-center rounded-full bg-gradient-to-tr from-[#A046FF] to-[#38BDF8] text-white shadow-md ring-2 ring-base-100 animate-in zoom-in duration-300">
+                 <span className="text-xs font-bold">R{i + 1}</span>
+                 {i === slotFilled - 1 && status === "LIVE" && (
+                   <span className="absolute -top-1 -right-1 flex size-3">
+                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"></span>
+                     <span className="relative inline-flex size-3 rounded-full bg-success ring-1 ring-white"></span>
+                   </span>
+                 )}
+               </div>
+             ) : (
+               <div className="flex size-9 sm:size-10 items-center justify-center rounded-full border border-dashed border-base-300 bg-base-100/50 text-base-content/20">
+                 +
+               </div>
+             )}
+          </div>
+        ))}
+      </div>
+      
+      {canStart ? (
+        <button type="button" className="btn btn-sm mt-4 h-9 min-h-9 w-full rounded-[8px] border-none bg-gradient-to-r from-[#A046FF] to-[#38BDF8] px-4 font-bold text-white shadow-lg shadow-[#A046FF]/20 hover:opacity-90">🚀 Start Group Quest</button>
+      ) : (
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-base-300/50 pt-2">
+          <p className="text-[10px] font-medium text-base-content/50">Tunggu slot penuh. Estimasi {candidates} kandidat aktif di area.</p>
+          <button type="button" className="btn btn-xs rounded bg-base-200 text-[10px] text-base-content/70 hover:bg-base-300 border-none shadow-none">Force Start</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GiverComponent() {
   const [tickSeconds, setTickSeconds] = useState(0);
   const [broadcastFilter, setBroadcastFilter] = useState<BroadcastFilter>("ALL");
@@ -84,6 +151,7 @@ function GiverComponent() {
       {} as Record<string, boolean>
     )
   );
+  const [subView, setSubView] = useState<GiverSubView | null>(resolveInitialSubView);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -92,6 +160,22 @@ function GiverComponent() {
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (subView) {
+      window.localStorage.setItem(GIVER_SUBVIEW_STORAGE_KEY, JSON.stringify(subView));
+    } else {
+      window.localStorage.removeItem(GIVER_SUBVIEW_STORAGE_KEY);
+    }
+  }, [subView]);
+
+  if (subView?.view === "QuestEditor") {
+    return <QuestEditor onBack={() => setSubView(null)} />;
+  }
+  if (subView?.view === "CandidateReview") {
+    return <CandidateReview candidateId={subView.payload.id} onBack={() => setSubView(null)} />;
+  }
 
   const filteredBroadcasts = useMemo(() => {
     if (broadcastFilter === "ALL") return giverBroadcastQuests;
@@ -127,14 +211,17 @@ function GiverComponent() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <Surface className="p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-base-content/45">Giver Command Center</p>
-            <h1 className="mt-1 text-xl font-bold text-base-content sm:text-2xl">Buat Quest, Broadcast Cerdas, dan Kelola Escrow End-to-End</h1>
+      <Surface className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-base-content/45">Giver Command Center</p>
+             <span className="rounded-[8px] bg-base-200 px-2.5 py-1 text-[10px] font-semibold text-base-content/70 hidden sm:inline-block">QQM Mode • Dummy Data</span>
           </div>
-          <span className="rounded-[8px] bg-base-200 px-2.5 py-1 text-xs font-semibold text-base-content/70">QQM Mode • Dummy Data</span>
+          <h1 className="mt-1.5 text-xl font-bold text-base-content sm:text-2xl">Buat Quest, Broadcast Cerdas, dan Kelola Escrow</h1>
         </div>
+        <button type="button" onClick={() => setSubView({ view: "QuestEditor" })} className="btn h-10 w-full sm:w-auto px-6 rounded-[10px] bg-[#6B21FF] hover:bg-[#6B21FF]/90 text-white border-none font-bold shadow-lg shadow-[#6B21FF]/30 transition-transform active:scale-95 text-sm">
+           + Buat Quest Baru
+        </button>
       </Surface>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -199,16 +286,20 @@ function GiverComponent() {
                   </div>
                 </div>
 
-                <div className="mt-3 rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2.5">
-                  <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold">
-                    <span className="text-base-content/70">Slot Terisi {quest.slotFilled}/{quest.slotTotal}</span>
-                    <span className="text-base-content">{slotProgress}%</span>
+                {quest.slotTotal > 1 ? (
+                  <PartyLobbyWidget slotFilled={quest.slotFilled} slotTotal={quest.slotTotal} status={quest.status} candidates={quest.estimatedCandidates} />
+                ) : (
+                  <div className="mt-3 rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2.5">
+                    <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold">
+                      <span className="text-base-content/70">Slot Terisi {quest.slotFilled}/{quest.slotTotal}</span>
+                      <span className="text-base-content">{slotProgress}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-base-200">
+                      <div className="h-2 rounded-full bg-[#6B21FF]" style={{ width: `${slotProgress}%` }} />
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-base-content/65">Estimasi kandidat aktif: {quest.estimatedCandidates} runner</p>
                   </div>
-                  <div className="h-2 rounded-full bg-base-200">
-                    <div className="h-2 rounded-full bg-[#6B21FF]" style={{ width: `${slotProgress}%` }} />
-                  </div>
-                  <p className="mt-1.5 text-[11px] text-base-content/65">Estimasi kandidat aktif: {quest.estimatedCandidates} runner</p>
-                </div>
+                )}
 
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2">
@@ -273,7 +364,12 @@ function GiverComponent() {
                   <div className="h-2 rounded-full bg-[#2563EB]" style={{ width: `${candidate.matchScore}%` }} />
                 </div>
                 <p className="mt-1.5 text-[11px] text-base-content/65">Completion {candidate.completionRate} • Dispute {candidate.disputeRatio}</p>
-                <span className="mt-2 inline-flex rounded-[8px] bg-[#E0F2FE] px-2 py-0.5 text-[11px] font-semibold text-[#0369A1]">{candidate.reliabilityBadge}</span>
+                <div className="mt-3 border-t border-base-200 pt-3 flex items-center justify-between">
+                   <span className="inline-flex rounded-[8px] bg-[#E0F2FE] px-2 py-0.5 text-[10px] font-bold text-[#0369A1]">{candidate.reliabilityBadge}</span>
+                   <button type="button" onClick={() => setSubView({ view: "CandidateReview", payload: { id: candidate.id } })} className="btn btn-xs rounded bg-base-200 text-[10px] font-bold text-base-content/80 hover:bg-base-300 border-none shadow-none">
+                     Review Data
+                   </button>
+                </div>
               </div>
             ))}
           </div>

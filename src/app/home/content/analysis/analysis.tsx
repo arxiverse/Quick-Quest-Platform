@@ -85,6 +85,66 @@ function insightImpactTone(level: "Low" | "Medium" | "High") {
   return "bg-[#DCFCE7] text-[#166534]";
 }
 
+function TargetImpianWidget() {
+  const [itemName, setItemName] = useState("Iphone 15 Pro Max");
+  const [itemPrice, setItemPrice] = useState(18000000);
+  const [currentSaved, setCurrentSaved] = useState(2500000);
+
+  const averageQuestWage = 75000;
+  const remaining = Math.max(0, itemPrice - currentSaved);
+  const questsNeeded = Math.ceil(remaining / averageQuestWage);
+  const progressPercent = Math.min(100, (currentSaved / itemPrice) * 100) || 0;
+
+  return (
+    <Surface className="p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45">
+            <span className="text-xl">🎯</span> Target & Realita (Anti-HEDON)
+          </p>
+          <h2 className="mt-1 text-lg font-bold text-base-content">Kalkulator Target Impian</h2>
+        </div>
+        <span className="rounded-[8px] bg-error/15 px-2.5 py-1 text-xs font-semibold text-error shadow-sm">Reality Slap 👋</span>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.1fr]">
+        <div className="space-y-3 rounded-[10px] bg-base-100 p-1">
+          <div>
+            <label className="text-[11px] font-semibold text-base-content/55 uppercase tracking-[0.06em]">Nama Barang Impian</label>
+            <input type="text" value={itemName} onChange={(e) => setItemName(e.target.value)} className="input input-sm mt-1 h-9 min-h-9 w-full rounded-[8px] border-base-300 bg-base-100 text-sm font-medium" placeholder="Contoh: Tiket Konser Coldplay" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold text-base-content/55 uppercase tracking-[0.06em]">Harga Barang (Rp)</label>
+              <input type="number" value={itemPrice} onChange={(e) => setItemPrice(Number(e.target.value))} className="input input-sm mt-1 h-9 min-h-9 w-full rounded-[8px] border-base-300 bg-base-100 text-sm font-bold" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-base-content/55 uppercase tracking-[0.06em]">Uang Tabungan (Rp)</label>
+              <input type="number" value={currentSaved} onChange={(e) => setCurrentSaved(Number(e.target.value))} className="input input-sm mt-1 h-9 min-h-9 w-full rounded-[8px] border-base-300 bg-base-100 text-sm font-bold text-success" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center rounded-[12px] border border-base-300/70 bg-gradient-to-br from-base-200 to-base-100 p-4 shadow-inner">
+          <p className="text-sm font-medium text-base-content/80">Untuk dapetin <span className="font-bold text-primary">{itemName || "Barang Impian"}</span>,</p>
+          <p className="mt-1 text-2xl font-bold leading-tight">Realitanya kerjain <span className="bg-gradient-to-r from-[#A046FF] to-[#38BDF8] bg-clip-text text-transparent">{questsNeeded} </span> Quest lagi!</p>
+          <p className="mt-1 text-[11px] font-medium text-base-content/55">*Asumsi rata-rata upah Quest Rp75.000 / kontrak</p>
+
+          <div className="mt-4">
+            <div className="mb-1.5 flex justify-between text-xs font-bold">
+              <span>Progress {progressPercent.toFixed(1)}%</span>
+              <span className="text-base-content/60">Sisa Rp {new Intl.NumberFormat("id-ID").format(remaining)}</span>
+            </div>
+            <div className="h-3.5 overflow-hidden rounded-full border border-base-300/50 bg-base-300/50">
+              <div className="h-full bg-gradient-to-r from-[#A046FF] to-[#38BDF8] transition-all duration-700 ease-out" style={{ width: `${progressPercent}%` }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Surface>
+  );
+}
+
 function AnalysisComponent() {
   const [timeRange, setTimeRange] = useState<AnalysisTimeRange>("7D");
   const [geoScope, setGeoScope] = useState<AnalysisGeoScopeKey>("ALL");
@@ -165,6 +225,8 @@ function AnalysisComponent() {
           ))}
         </div>
       </Surface>
+
+      <TargetImpianWidget />
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <Surface className="p-4 sm:p-5">

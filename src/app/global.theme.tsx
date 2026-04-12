@@ -9,18 +9,22 @@ function themeAttribute() {
 }
 
 function SwitchTheme() {
-    const [theme, setTheme] = useState<string | null>(null);
+    const [theme, setTheme] = useState<string>(() => {
+        if (typeof window === "undefined") {
+            return "Neiravoid";
+        }
+
+        return localStorage.getItem("theme") || "Neiravoid";
+    });
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem("theme");
-        const initialTheme = savedTheme || "Neiravoid";
-        document.documentElement.setAttribute("data-theme", initialTheme);
-        setTheme(initialTheme);
-    }, []);
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+    }, [theme]);
 
     const handleThemeChange = () => {
         themeAttribute();
-        const newTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = document.documentElement.getAttribute("data-theme") || "Neiravoid";
         setTheme(newTheme);
     };
 
