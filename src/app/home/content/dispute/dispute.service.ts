@@ -1,0 +1,358 @@
+// ─────────────────────────────────────────────────
+// dispute.service.ts — Dummy data for Dispute Center
+// ─────────────────────────────────────────────────
+import type { DisputeItem, DisputeLayer } from "./dispute";
+
+export const DISPUTE_FILTER_OPTIONS_SEED = [
+  "ALL",
+  "EVIDENCE_SUBMISSION",
+  "UNDER_REVIEW",
+  "RESOLVED_RUNNER",
+] as const;
+
+export const disputeFilterLabelSeed: Record<
+  (typeof DISPUTE_FILTER_OPTIONS_SEED)[number],
+  string
+> = {
+  ALL: "Semua",
+  EVIDENCE_SUBMISSION: "Submit Bukti",
+  UNDER_REVIEW: "Review",
+  RESOLVED_RUNNER: "Selesai",
+};
+
+export type DisputeViewCopy = {
+  hero: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
+  stats: {
+    caseSuffix: string;
+    labels: {
+      active: string;
+      resolved: string;
+      total: string;
+    };
+  };
+  layer: {
+    eyebrow: string;
+    title: string;
+    badgePrefix: string;
+  };
+  list: {
+    eyebrow: string;
+    title: string;
+    emptyMessage: string;
+    detailButton: string;
+  };
+  card: {
+    raisedByPrefix: string;
+    raisedAtSeparator: string;
+    evidenceUploadedLabel: string;
+    evidenceItemSuffix: string;
+    evidenceDeadlineLabel: string;
+    mediatorNoteLabel: string;
+    autoTimerEnded: string;
+    autoTimerPrefix: string;
+  };
+};
+
+export const disputeViewCopySeed: DisputeViewCopy = {
+  hero: {
+    eyebrow: "Dispute Center",
+    title: "Pusat Penyelesaian Sengketa",
+    description:
+      "Mekanisme 3 lapis: Auto Timer → Evidence → Platform Mediasi. Dana aman selama proses berlangsung.",
+  },
+  stats: {
+    caseSuffix: "kasus",
+    labels: {
+      active: "Sengketa Aktif",
+      resolved: "Terselesaikan",
+      total: "Total",
+    },
+  },
+  layer: {
+    eyebrow: "Mekanisme Penyelesaian",
+    title: "3 Lapis Dispute Resolution",
+    badgePrefix: "Layer",
+  },
+  list: {
+    eyebrow: "Daftar Sengketa",
+    title: "Semua Kasus Aktif & Selesai",
+    emptyMessage: "Tidak ada dispute ditemukan",
+    detailButton: "Lihat Detail & Upload Bukti",
+  },
+  card: {
+    raisedByPrefix: "Diajukan oleh",
+    raisedAtSeparator: "·",
+    evidenceUploadedLabel: "Bukti Diupload",
+    evidenceItemSuffix: "item",
+    evidenceDeadlineLabel: "Deadline Bukti",
+    mediatorNoteLabel: "Catatan Mediator",
+    autoTimerEnded: "Auto-timer sudah habis",
+    autoTimerPrefix: "⏱ Auto-Release Dalam",
+  },
+};
+
+export const disputeLayerToneSeed = [
+  {
+    border: "border-[#10B981]/30",
+    bg: "dispute-layer-gradient-1",
+    badge: "bg-[#DCFCE7] text-[#166534]",
+  },
+  {
+    border: "border-[#F59E0B]/30",
+    bg: "dispute-layer-gradient-2",
+    badge: "bg-[#FEF3C7] text-[#92400E]",
+  },
+  {
+    border: "border-[#A046FF]/30",
+    bg: "dispute-layer-gradient-3",
+    badge: "bg-[#E9D5FF] text-[#6D28D9]",
+  },
+] as const;
+
+export const disputeLayers: DisputeLayer[] = [
+  {
+    layer: 1,
+    label: "Auto Timer",
+    description:
+      "Jika Giver tidak melakukan audit dalam 24 jam setelah Runner menekan 'Selesai Kerja', sistem secara otomatis me-release dana ke Runner.",
+  },
+  {
+    layer: 2,
+    label: "Evidence Based",
+    description:
+      "Kedua pihak dapat mengupload bukti (foto/video pekerjaan). Sistem memberi waktu 24 jam untuk submit bukti dari masing-masing pihak.",
+  },
+  {
+    layer: 3,
+    label: "Platform Mediasi",
+    description:
+      "Tim QQ mereview bukti dari kedua pihak dan memberikan keputusan final. Pihak yang terbukti salah mendapat PP turun + peringatan. Repeat offender → akun di-suspend.",
+  },
+];
+
+export const disputeStatusMeta: Record<
+  DisputeItem["status"],
+  { label: string; color: string; bg: string }
+> = {
+  AUTO_TIMER:           { label: "Auto Timer Aktif",    color: "text-[#92400E]",  bg: "bg-[#FEF3C7]" },
+  EVIDENCE_SUBMISSION:  { label: "Submit Bukti",        color: "text-[#1D4ED8]",  bg: "bg-[#DBEAFE]" },
+  UNDER_REVIEW:         { label: "Dalam Review",        color: "text-[#6D28D9]",  bg: "bg-[#E9D5FF]" },
+  RESOLVED_RUNNER:      { label: "Selesai — Runner Menang", color: "text-[#166534]", bg: "bg-[#DCFCE7]" },
+  RESOLVED_GIVER:       { label: "Selesai — Giver Menang",  color: "text-[#166534]", bg: "bg-[#DCFCE7]" },
+  DISMISSED:            { label: "Ditolak",             color: "text-[#991B1B]",  bg: "bg-[#FEE2E2]" },
+};
+
+export const disputeItems: DisputeItem[] = [
+  {
+    id: "DSP-001",
+    questId: "QST-7821",
+    questTitle: "Bersih-bersih Kantor Lantai 3",
+    amount: "Rp 120.000",
+    raisedBy: "GIVER",
+    raisedAt: "14 Apr 2026, 09:30",
+    status: "EVIDENCE_SUBMISSION",
+    autoReleaseHoursLeft: 18,
+    evidenceDeadline: "15 Apr 2026, 09:30",
+    giverEvidence: [
+      {
+        id: "EV-001",
+        uploader: "GIVER",
+        type: "PHOTO",
+        label: "Foto area yang belum dibersihkan",
+        uploadedAt: "14 Apr 2026, 10:15",
+      },
+      {
+        id: "EV-002",
+        uploader: "GIVER",
+        type: "NOTE",
+        label: "Catatan inspeksi: sudut kiri toilet masih kotor",
+        uploadedAt: "14 Apr 2026, 10:20",
+      },
+    ],
+    runnerEvidence: [
+      {
+        id: "EV-003",
+        uploader: "RUNNER",
+        type: "PHOTO",
+        label: "Foto hasil bersih-bersih (after)",
+        uploadedAt: "14 Apr 2026, 11:00",
+      },
+    ],
+  },
+  {
+    id: "DSP-002",
+    questId: "QST-7744",
+    questTitle: "Install Jaringan WiFi Kantor",
+    amount: "Rp 350.000",
+    raisedBy: "RUNNER",
+    raisedAt: "12 Apr 2026, 14:00",
+    status: "UNDER_REVIEW",
+    autoReleaseHoursLeft: 0,
+    evidenceDeadline: "13 Apr 2026, 14:00",
+    giverEvidence: [],
+    runnerEvidence: [
+      {
+        id: "EV-010",
+        uploader: "RUNNER",
+        type: "PHOTO",
+        label: "Foto instalasi selesai + speed test",
+        uploadedAt: "12 Apr 2026, 15:30",
+      },
+      {
+        id: "EV-011",
+        uploader: "RUNNER",
+        type: "VIDEO",
+        label: "Video demo koneksi berjalan normal",
+        uploadedAt: "12 Apr 2026, 15:35",
+      },
+    ],
+    mediatorNote: "Bukti Runner lebih kuat. Sedang dalam finalisasi keputusan.",
+  },
+  {
+    id: "DSP-003",
+    questId: "QST-7610",
+    questTitle: "Antar Dokumen ke Notaris",
+    amount: "Rp 75.000",
+    raisedBy: "RUNNER",
+    raisedAt: "10 Apr 2026, 08:00",
+    status: "RESOLVED_RUNNER",
+    autoReleaseHoursLeft: 0,
+    evidenceDeadline: "11 Apr 2026, 08:00",
+    giverEvidence: [],
+    runnerEvidence: [
+      {
+        id: "EV-020",
+        uploader: "RUNNER",
+        type: "PHOTO",
+        label: "Foto tanda terima dari notaris",
+        uploadedAt: "10 Apr 2026, 10:45",
+      },
+    ],
+    mediatorNote: "Runner terbukti telah mengantar dokumen. Dana di-release penuh.",
+    resolvedAt: "11 Apr 2026, 12:00",
+  },
+];
+
+// ─── GIVER MODE DATA ────────────────────────────────────────────────────────
+
+export const disputeGiverViewCopySeed: DisputeViewCopy = {
+  hero: {
+    eyebrow: "Giver Dispute Center",
+    title: "Pusat Sengketa Pemberi Kerja",
+    description:
+      "Lindungi dana escrow Anda. Gunakan fitur audit 24 jam untuk menahan dana jika kinerja tidak sesuai standar.",
+  },
+  stats: {
+    caseSuffix: "laporan",
+    labels: {
+      active: "Investigasi",
+      resolved: "Kasus Selesai",
+      total: "Total Laporan",
+    },
+  },
+  layer: {
+    eyebrow: "Sistem Perlindungan Giver",
+    title: "Tiga Tahap Audit Kinerja",
+    badgePrefix: "Tahap",
+  },
+  list: {
+    eyebrow: "Daftar Laporan Anda",
+    title: "Pekerjaan Bermasalah Aktif & Selesai",
+    emptyMessage: "Tidak ada kinerja bermasalah saat ini",
+    detailButton: "Tinjau & Lengkapi Bukti",
+  },
+  card: {
+    raisedByPrefix: "Dilaporkan oleh",
+    raisedAtSeparator: "·",
+    evidenceUploadedLabel: "Bukti Diunggah",
+    evidenceItemSuffix: "lampiran",
+    evidenceDeadlineLabel: "Batas Waktu Upload",
+    mediatorNoteLabel: "Catatan Admin Neiraverse",
+    autoTimerEnded: "Dana ter-release ke Runner",
+    autoTimerPrefix: "⏱ Sisa Waktu Audit",
+  },
+};
+
+export const disputeGiverItems: DisputeItem[] = [
+  {
+    id: "GDSP-001",
+    questId: "QST-9912",
+    questTitle: "Riset Pasar Kopi Lokal (200 Responden)",
+    amount: "Rp 850.000",
+    raisedBy: "GIVER",
+    raisedAt: "15 Apr 2026, 14:20",
+    status: "EVIDENCE_SUBMISSION",
+    autoReleaseHoursLeft: 0,
+    evidenceDeadline: "16 Apr 2026, 14:20",
+    giverEvidence: [
+      {
+        id: "GEV-001",
+        uploader: "GIVER",
+        type: "NOTE",
+        label: "Bukti screenshot: Mayoritas responden diisi oleh bot/akun palsu.",
+        uploadedAt: "15 Apr 2026, 14:35",
+      },
+      {
+        id: "GEV-002",
+        uploader: "GIVER",
+        type: "PHOTO",
+        label: "Data excel anomali",
+        uploadedAt: "15 Apr 2026, 14:40",
+      },
+    ],
+    runnerEvidence: [],
+  },
+  {
+    id: "GDSP-002",
+    questId: "QST-9884",
+    questTitle: "Jaga Stand Pameran 8 Jam",
+    amount: "Rp 300.000",
+    raisedBy: "GIVER",
+    raisedAt: "12 Apr 2026, 18:00",
+    status: "UNDER_REVIEW",
+    autoReleaseHoursLeft: 0,
+    evidenceDeadline: "13 Apr 2026, 18:00",
+    giverEvidence: [
+      {
+        id: "GEV-010",
+        uploader: "GIVER",
+        type: "VIDEO",
+        label: "Rekaman CCTV: Runner meninggalkan stand selama 3 jam",
+        uploadedAt: "12 Apr 2026, 18:15",
+      },
+    ],
+    runnerEvidence: [
+      {
+        id: "GEV-011",
+        uploader: "RUNNER",
+        type: "NOTE",
+        label: "Surat izin sakit sementara / P3K",
+        uploadedAt: "13 Apr 2026, 09:10",
+      },
+    ],
+    mediatorNote: "Bukti CCTV dan alasan P3K sedang dievaluasi bersama panitia pameran.",
+  },
+];
+
+// ─── ROLE DATA SEED MAP ──────────────────────────────────────────────────────
+
+export type DisputeRoleDataSeed = {
+  viewCopy: DisputeViewCopy;
+  items: DisputeItem[];
+};
+
+export const disputeRoleDataSeed: Record<"runner" | "giver", DisputeRoleDataSeed> = {
+  runner: {
+    viewCopy: disputeViewCopySeed,
+    items: disputeItems,
+  },
+  giver: {
+    viewCopy: disputeGiverViewCopySeed,
+    items: disputeGiverItems,
+  },
+};
+

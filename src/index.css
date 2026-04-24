@@ -1,0 +1,233 @@
+﻿@import "tailwindcss";
+
+@plugin "daisyui";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@plugin "daisyui/theme" {
+  name: "Neiravoid";
+  default: true;
+  prefers-color-scheme: dark;
+  color-scheme: dark;
+
+  --color-base-100: oklch(0 0 none);
+  --color-base-200: oklch(0.2 0 none);
+  --color-base-300: oklch(0.25 0 none);
+  --color-base-content: oklch(1 0 none);
+
+  --color-primary: oklch(1 0 none);
+  --color-primary-content: oklch(0 0 none);
+
+  --color-secondary: oklch(70% 0.25 200);
+  --color-secondary-content: oklch(15% 0.03 200);
+
+  --color-accent: oklch(65% 0.25 160);
+  --color-accent-content: oklch(15% 0.03 160);
+
+  --color-neutral: oklch(0.5 0 none);
+  --color-neutral-content: oklch(98% 0.01 240);
+
+  --color-info: oklch(70% 0.2 220);
+  --color-info-content: oklch(15% 0.03 220);
+  --color-success: oklch(65% 0.25 140);
+  --color-success-content: oklch(15% 0.03 140);
+  --color-warning: oklch(80% 0.25 80);
+  --color-warning-content: oklch(20% 0.05 80);
+  --color-error: oklch(65% 0.3 30);
+  --color-error-content: oklch(98% 0.01 30);
+}
+
+@plugin "daisyui/theme" {
+  name: "Neiralight";
+  default: false;
+  prefers-color-scheme: light;
+  color-scheme: light;
+
+  --color-base-100: oklch(1 0 none);
+  --color-base-200: oklch(0.9 0 none);
+  --color-base-300: oklch(0.85 0 none);
+  --color-base-content: oklch(0 0 none);
+
+  --color-primary: oklch(0 0 none);
+  --color-primary-content: oklch(1 0 none);
+
+  --color-secondary: oklch(65% 0.25 200);
+  --color-secondary-content: oklch(0 0 none);
+
+  --color-accent: oklch(60% 0.25 160);
+  --color-accent-content: oklch(20% 0.05 160);
+
+  --color-neutral: oklch(0.5 0 none);
+  --color-neutral-content: oklch(20% 0.05 240);
+
+  --color-info: oklch(55% 0.2 220);
+  --color-info-content: oklch(20% 0.05 220);
+  --color-success: oklch(55% 0.25 140);
+  --color-success-content: oklch(20% 0.05 140);
+  --color-warning: oklch(70% 0.25 80);
+  --color-warning-content: oklch(20% 0.05 80);
+  --color-error: oklch(55% 0.3 30);
+  --color-error-content: oklch(98% 0.01 30);
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('./assets/font/Quicksand-Bold.ttf');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('./assets/font/Quicksand-SemiBold.ttf');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('./assets/font/Quicksand-Medium.ttf');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('./assets/font/Quicksand-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@theme {
+  --font-sans: 'Quicksand', sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.theme-bg {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.theme-bg::before,
+.theme-bg::after {
+  content: "";
+  position: absolute;
+  width: 1900px;
+  height: 1900px;
+  pointer-events: none;
+  filter: blur(150px);
+  z-index: -1;
+}
+
+.theme-bg::before {
+  left: -980px;
+  top: 220px;
+  background: radial-gradient(circle at center, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0.307));
+}
+
+.theme-bg::after {
+  right: -760px;
+  top: -980px;
+  background: radial-gradient(circle at center, rgba(21, 0, 255, 0.192) 0%, rgba(38, 0, 255, 0.279) 70%);
+}
+
+.home-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-base-300) 80%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-base-300) 80%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.auth-stage {
+  min-height: calc(100vh - 5rem);
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.auth-card {
+  max-width: 100%;
+  border-radius: 28px;
+  border: 1px solid color-mix(in oklab, var(--color-base-300) 75%, transparent);
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  box-shadow: 0 3px 12px rgba(17, 24, 40, 0.08);
+}
+
+.auth-logo-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
+  background: transparent;
+}
+
+.auth-section-title {
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.auth-field {
+  height: 43px;
+  border-radius: 10px;
+}
+
+.auth-submit {
+  height: 40px;
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.auth-social-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-social-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-base-content);
+  opacity: 0.9;
+}
+
+.dashboard-dot-active {
+  background: var(--color-base-content);
+}
+
+.dashboard-dot-muted {
+  background: var(--color-base-300);
+}
+
+.glassed {
+  background: rgba(255, 255, 255, 0.200);
+  box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(2px);
+  -moz-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+
+}
