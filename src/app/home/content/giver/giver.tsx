@@ -6,7 +6,6 @@ import {
   formatGiverCountdown,
   giverBriefChecklistItems,
   giverBroadcastFilters,
-  giverBroadcastQuests,
   giverBudgetCards,
   giverCandidateSortOptions,
   giverCandidates,
@@ -29,6 +28,7 @@ import {
   type CandidateSort,
   type GiverBroadcastStatus,
   type GiverSubView,
+  useGiverDashboardVM,
 } from "./giver";
 import { QuestEditor } from "./page/quest-editor";
 import { CandidateReview } from "./page/candidate-review";
@@ -110,6 +110,7 @@ function GiverComponent() {
   );
   const [subView, setSubView] = useState<GiverSubView | null>(resolveInitialGiverSubView);
   const { animationsEnabled } = useAnimationTheme();
+  const dashboardVM = useGiverDashboardVM();
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -124,8 +125,8 @@ function GiverComponent() {
   }, [subView]);
 
   const filteredBroadcasts = useMemo(
-    () => filterGiverBroadcastQuests(giverBroadcastQuests, broadcastFilter),
-    [broadcastFilter],
+    () => filterGiverBroadcastQuests(dashboardVM.quests, broadcastFilter),
+    [broadcastFilter, dashboardVM.quests],
   );
 
   const sortedCandidates = useMemo(
@@ -162,6 +163,11 @@ function GiverComponent() {
             <span className="rounded-[8px] bg-base-200 px-2.5 py-1 text-[10px] font-semibold text-base-content/70 hidden sm:inline-block">{giverViewText.hero.badge}</span>
           </div>
           <h1 className="mt-1.5 text-xl font-bold text-base-content sm:text-2xl">{giverViewText.hero.title}</h1>
+          {dashboardVM.errorMessage ? (
+            <p className="mt-1 text-xs font-semibold text-warning">
+              Mode fallback seed: {dashboardVM.errorMessage}
+            </p>
+          ) : null}
         </div>
         <button type="button" onClick={() => setSubView({ view: "QuestEditor" })} className="btn h-10 w-full sm:w-auto px-6 rounded-[10px] bg-[#6B21FF] hover:bg-[#6B21FF]/90 text-white border-none font-bold shadow-lg shadow-[#6B21FF]/30 transition-transform active:scale-95 text-sm">
           {giverViewText.hero.createQuestButton}
@@ -183,6 +189,9 @@ function GiverComponent() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/45">{giverViewText.broadcast.eyebrow}</p>
             <h2 className="mt-1 text-lg font-bold text-base-content">{giverViewText.broadcast.title}</h2>
+            {dashboardVM.isLoading ? (
+              <p className="mt-1 text-xs font-semibold text-primary">Sinkronisasi quest giver...</p>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             {giverBroadcastFilters.map((filter) => (
@@ -245,6 +254,47 @@ function GiverComponent() {
                     <p className="mt-1.5 text-[11px] text-base-content/65">{giverViewText.broadcast.labels.estimatedCandidates} {quest.estimatedCandidates} runner</p>
                   </div>
                 )}
+
+                {dashboardVM.assignmentsByQuest[quest.id]?.filter((assignment) => assignment.status === "finished").map((assignment) => (
+                  <div key={assignment.id} className="mt-3 rounded-[10px] border border-warning/30 bg-warning/10 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-warning">
+                          Pending Audit
+                        </p>
+                        <p className="mt-0.5 text-xs font-semibold text-base-content">
+                          {assignment.runnerName} selesai pada {assignment.finishedAt}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          disabled={dashboardVM.auditActionId === assignment.id}
+                          onClick={() => void dashboardVM.auditAssignment(assignment.id, "accept")}
+                          className="btn h-8 min-h-8 rounded-[8px] border-none bg-success px-3 text-[11px] font-bold text-success-content"
+                        >
+                          Terima
+                        </button>
+                        <button
+                          type="button"
+                          disabled={dashboardVM.auditActionId === assignment.id}
+                          onClick={() => void dashboardVM.auditAssignment(assignment.id, "revision")}
+                          className="btn h-8 min-h-8 rounded-[8px] border-none bg-warning px-3 text-[11px] font-bold text-warning-content"
+                        >
+                          Revisi
+                        </button>
+                        <button
+                          type="button"
+                          disabled={dashboardVM.auditActionId === assignment.id}
+                          onClick={() => void dashboardVM.auditAssignment(assignment.id, "dispute")}
+                          className="btn h-8 min-h-8 rounded-[8px] border-none bg-error px-3 text-[11px] font-bold text-error-content"
+                        >
+                          Dispute
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
 
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   <div className="rounded-[9px] border border-base-300/70 bg-base-100 px-3 py-2">

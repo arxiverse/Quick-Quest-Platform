@@ -3,22 +3,45 @@ import { cn, Surface } from "../../../../home.ui";
 import {
   createInitialRunnerCountdown,
   createInitialRunnerWorkState,
+  fetchRunnerActiveQuestLive,
+  finishRunnerActiveQuestLive,
   formatRunnerCountdown,
   getRunnerActiveQuestSeed,
   resolveRunnerActiveQuestEscrowClass,
   resolveRunnerAutoReleaseUrgency,
   resolveRunnerEscrowFlowIndex,
+  startRunnerActiveQuestLive,
   tickRunnerCountdown,
 } from "./active-quest";
 
 export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
-  const vm = getRunnerActiveQuestSeed();
+  const [quests, setQuests] = useState(() => getRunnerActiveQuestSeed().quests);
+  const vm = { quests, escrowFlow: getRunnerActiveQuestSeed().escrowFlow };
   const [workState, setWorkState] = useState(() =>
     createInitialRunnerWorkState(vm.quests),
   );
   const [countdown, setCountdown] = useState(() =>
     createInitialRunnerCountdown(vm.quests),
   );
+  const [actionQuestId, setActionQuestId] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    fetchRunnerActiveQuestLive()
+      .then((items) => {
+        if (!mounted || items.length === 0) return;
+        setQuests(items);
+        setWorkState(createInitialRunnerWorkState(items));
+        setCountdown(createInitialRunnerCountdown(items));
+      })
+      .catch((error) =>
+        setErrorMessage(error instanceof Error ? error.message : "Gagal hydrate active quest."),
+      );
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -38,6 +61,9 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
             <h2 className="mt-1 text-xl font-bold text-base-content">
               Pantau, mulai, dan selesaikan quest aktif
             </h2>
+            {errorMessage ? (
+              <p className="mt-1 text-xs font-semibold text-warning">Mode fallback seed: {errorMessage}</p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -142,23 +168,35 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  disabled={state !== "idle"}
-                  onClick={() =>
-                    setWorkState((prev) => ({ ...prev, [quest.id]: "started" }))
-                  }
+                  disabled={state !== "idle" || actionQuestId === quest.id}
+                  onClick={() => {
+                    setActionQuestId(quest.id);
+                    startRunnerActiveQuestLive(quest.id)
+                      .then(() => setWorkState((prev) => ({ ...prev, [quest.id]: "started" })))
+                      .catch((error) =>
+                        setErrorMessage(error instanceof Error ? error.message : "Gagal mulai kerja."),
+                      )
+                      .finally(() => setActionQuestId(""));
+                  }}
                   className="btn h-10 min-h-10 rounded-[9px] border-none bg-info text-info-content text-xs font-bold disabled:opacity-40"
                 >
-                  {state === "started" ? "Sedang Kerja..." : "Mulai Kerja"}
+                  {actionQuestId === quest.id ? "Memulai..." : state === "started" ? "Sedang Kerja..." : "Mulai Kerja"}
                 </button>
                 <button
                   type="button"
-                  disabled={state !== "started"}
-                  onClick={() =>
-                    setWorkState((prev) => ({ ...prev, [quest.id]: "finished" }))
-                  }
+                  disabled={state !== "started" || actionQuestId === quest.id}
+                  onClick={() => {
+                    setActionQuestId(quest.id);
+                    finishRunnerActiveQuestLive(quest.id)
+                      .then(() => setWorkState((prev) => ({ ...prev, [quest.id]: "finished" })))
+                      .catch((error) =>
+                        setErrorMessage(error instanceof Error ? error.message : "Gagal selesai kerja."),
+                      )
+                      .finally(() => setActionQuestId(""));
+                  }}
                   className="btn h-10 min-h-10 rounded-[9px] border-none bg-success text-success-content text-xs font-bold disabled:opacity-40"
                 >
-                  Selesai Kerja
+                  {actionQuestId === quest.id ? "Memproses..." : "Selesai Kerja"}
                 </button>
               </div>
             </Surface>

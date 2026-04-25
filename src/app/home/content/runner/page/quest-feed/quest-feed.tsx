@@ -40,8 +40,14 @@ export function RunnerQuestFeedPage({
       <RunnerQuestFeedDetailPage
         questId={subView.questId}
         onBack={() => setSubView(null)}
-        onTakeQuest={onOpenActiveQuest}
-        onJoinPartyLobby={() => onOpenPartyLobby(mappedPartyId)}
+        onTakeQuest={async () => {
+          await vm.takeQuest(subView.questId);
+          onOpenActiveQuest();
+        }}
+        onJoinPartyLobby={async () => {
+          await vm.takeQuest(subView.questId);
+          onOpenPartyLobby(mappedPartyId);
+        }}
       />
     );
   }
@@ -57,6 +63,11 @@ export function RunnerQuestFeedPage({
             <h2 className="mt-1 text-xl font-bold text-base-content">
               Semua Quest terbuka untuk runner
             </h2>
+            {vm.isLoading ? (
+              <p className="mt-1 text-xs font-semibold text-primary">Sinkronisasi feed quest...</p>
+            ) : vm.errorMessage ? (
+              <p className="mt-1 text-xs font-semibold text-warning">Mode fallback seed: {vm.errorMessage}</p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -132,21 +143,23 @@ export function RunnerQuestFeedPage({
                 <button
                   type="button"
                   onClick={() =>
-                    onOpenPartyLobby(
-                      quest.id === "QF-202" ? "P-102" : "P-101",
+                    void vm.takeQuest(quest.id).then(() =>
+                      onOpenPartyLobby(quest.id === "QF-202" ? "P-102" : "P-101"),
                     )
                   }
+                  disabled={vm.actionQuestId === quest.id}
                   className="btn h-10 min-h-10 rounded-[10px] border-none bg-secondary px-5 text-sm font-bold text-secondary-content"
                 >
-                  Join Group Lobby
+                  {vm.actionQuestId === quest.id ? "Joining..." : "Join Group Lobby"}
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={onOpenActiveQuest}
+                  onClick={() => void vm.takeQuest(quest.id).then(onOpenActiveQuest)}
+                  disabled={vm.actionQuestId === quest.id}
                   className="btn h-10 min-h-10 rounded-[10px] border-none bg-primary px-5 text-sm font-bold text-primary-content"
                 >
-                  Ambil Quest
+                  {vm.actionQuestId === quest.id ? "Mengambil..." : "Ambil Quest"}
                 </button>
               )}
             </div>

@@ -1,7 +1,10 @@
+import { useCallback, useEffect, useState } from "react";
 import type { RunnerQuestFeedItem } from "../../runner.service";
 import {
   RUNNER_QUEST_FEED_SUBVIEW_STORAGE_KEY_SEED,
+  fetchRunnerQuestFeedLive,
   getRunnerQuestFeedSeed,
+  takeRunnerQuestLive,
 } from "./quest-feed.service";
 
 export type RunnerQuestFeedSubView = null | { view: "Detail"; questId: string };
@@ -10,8 +13,50 @@ export const runnerQuestFeedSubViewStorageKey =
   RUNNER_QUEST_FEED_SUBVIEW_STORAGE_KEY_SEED;
 
 export function useRunnerQuestFeedVM() {
+  const [quests, setQuests] = useState<RunnerQuestFeedItem[]>(getRunnerQuestFeedSeed);
+  const [isLoading, setIsLoading] = useState(false);
+  const [actionQuestId, setActionQuestId] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const items = await fetchRunnerQuestFeedLive();
+      setQuests(items.length > 0 ? items : getRunnerQuestFeedSeed());
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengambil quest feed.");
+      setQuests(getRunnerQuestFeedSeed());
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const takeQuest = useCallback(async (questId: string) => {
+    setActionQuestId(questId);
+    setErrorMessage("");
+    try {
+      await takeRunnerQuestLive(questId);
+      await refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengambil quest.");
+      throw error;
+    } finally {
+      setActionQuestId("");
+    }
+  }, [refresh]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
   return {
-    quests: getRunnerQuestFeedSeed(),
+    quests,
+    isLoading,
+    actionQuestId,
+    errorMessage,
+    refresh,
+    takeQuest,
   };
 }
 

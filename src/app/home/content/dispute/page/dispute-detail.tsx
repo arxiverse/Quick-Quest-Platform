@@ -6,6 +6,7 @@ import {
   disputeStatusMeta,
   type DisputeEvidence,
   type DisputeItem,
+  useDisputeDetailVM,
 } from "../dispute";
 import { disputeGiverItems } from "../dispute.service";
 
@@ -28,7 +29,9 @@ export function DisputeDetail({
 }) {
   const dispute =
     allKnownDisputes.find((d) => d.id === disputeId) || allKnownDisputes[0];
-  const meta = disputeStatusMeta[dispute.status];
+  const detailVM = useDisputeDetailVM(disputeId, dispute);
+  const liveDispute = detailVM.item;
+  const meta = disputeStatusMeta[liveDispute.status];
 
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [noteText, setNoteText] = useState("");
@@ -65,14 +68,27 @@ export function DisputeDetail({
   }
 
   const allEvidence: DisputeEvidence[] = [
-    ...dispute.giverEvidence,
-    ...dispute.runnerEvidence,
+    ...liveDispute.giverEvidence,
+    ...liveDispute.runnerEvidence,
   ];
 
   const isResolved =
-    dispute.status.startsWith("RESOLVED") || dispute.status === "DISMISSED";
-  const isUnderReview = dispute.status === "UNDER_REVIEW";
+    liveDispute.status.startsWith("RESOLVED") || liveDispute.status === "DISMISSED";
+  const isUnderReview = liveDispute.status === "UNDER_REVIEW";
   const needsEvidence = !isResolved && !isUnderReview;
+
+  async function submitUploads() {
+    if (uploads.length === 0) return;
+    for (const upload of uploads) {
+      await detailVM.submitEvidence({
+        type: upload.type,
+        label: upload.label,
+        note_text: upload.note,
+      });
+    }
+    setSubmitted(true);
+    setUploads([]);
+  }
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -100,7 +116,7 @@ export function DisputeDetail({
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60">
-              ID Mediasi: {dispute.id}
+              ID Mediasi: {liveDispute.id}
             </p>
             <span
               className={cn(
@@ -113,30 +129,35 @@ export function DisputeDetail({
             </span>
           </div>
           <h1 className="mt-2 text-xl font-bold text-base-content sm:text-2xl">
-            {dispute.questTitle}
+            {liveDispute.questTitle}
           </h1>
+          {detailVM.isLoading ? (
+            <p className="mt-2 text-xs font-semibold text-primary">Sinkronisasi detail dispute...</p>
+          ) : detailVM.errorMessage ? (
+            <p className="mt-2 text-xs font-semibold text-warning">Mode fallback seed: {detailVM.errorMessage}</p>
+          ) : null}
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-base-content/70">
             <div className="flex flex-col">
               <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">
                 Escrow Value
               </span>
               <strong className="text-[#10B981] text-base">
-                {dispute.amount}
+                {liveDispute.amount}
               </strong>
             </div>
             <div className="flex flex-col border-l border-base-300 pl-4">
               <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">
                 Diajukan Oleh
               </span>
-              <strong className="text-base-content">{dispute.raisedBy}</strong>
+              <strong className="text-base-content">{liveDispute.raisedBy}</strong>
             </div>
-            {dispute.resolvedAt && (
+            {liveDispute.resolvedAt && (
               <div className="flex flex-col border-l border-base-300 pl-4">
                 <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">
                   Tanggal Diputus
                 </span>
                 <strong className="text-base-content tracking-tight">
-                  {dispute.resolvedAt}
+                  {liveDispute.resolvedAt}
                 </strong>
               </div>
             )}
@@ -158,7 +179,7 @@ export function DisputeDetail({
               <p className="mt-1 text-sm text-base-content/65">
                 Sistem memberi waktu 24 jam untuk submit bukti. Bukti yang
                 disubmit menjadi dasar keputusan mediator (Tenggat:{" "}
-                {dispute.evidenceDeadline}).
+                {liveDispute.evidenceDeadline}).
               </p>
 
               {/* Upload Buttons */}
@@ -252,7 +273,7 @@ export function DisputeDetail({
               <div className="mt-6 border-t border-base-200 pt-4 relative z-10 bg-base-100">
                 <button
                   type="button"
-                  onClick={() => setSubmitted(true)}
+                  onClick={() => void submitUploads()}
                   disabled={uploads.length === 0}
                   className="btn h-12 w-full rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:shadow-none"
                 >
@@ -278,7 +299,7 @@ export function DisputeDetail({
                 mengunci dana secara aman hingga keputusan final ditetapkan
                 secara objektif.
               </p>
-              {dispute.mediatorNote && (
+              {liveDispute.mediatorNote && (
                 <div className="mt-2 rounded-[12px] border border-[#A046FF]/30 bg-base-100 p-4 max-w-md w-full relative z-10 shadow-sm text-left">
                   <p className="text-[10px] font-bold text-[#A046FF] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                     <span className="relative flex size-2">
@@ -288,14 +309,14 @@ export function DisputeDetail({
                     Update Mediator Live
                   </p>
                   <p className="text-sm text-base-content/80 font-medium">
-                    "{dispute.mediatorNote}"
+                    "{liveDispute.mediatorNote}"
                   </p>
                 </div>
               )}
             </Surface>
           )}
 
-          {isResolved && <ResolutionSettlementInvoice dispute={dispute} />}
+          {isResolved && <ResolutionSettlementInvoice dispute={liveDispute} />}
         </div>
 
         {/* Existing Evidence Panel & Timeline */}
@@ -305,8 +326,8 @@ export function DisputeDetail({
               Riwayat Penanganan
             </p>
             <div className="relative pl-3 space-y-5 border-l-2 border-base-300 ml-2">
-              {dispute.timeline.map((event, index) => {
-                const isLast = index === dispute.timeline.length - 1;
+              {liveDispute.timeline.map((event, index) => {
+                const isLast = index === liveDispute.timeline.length - 1;
                 const isActive = !isResolved && isLast;
                 return (
                   <div key={index} className="relative">

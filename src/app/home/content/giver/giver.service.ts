@@ -1,3 +1,4 @@
+import GlobalEndpoint, { postJson, requestJson } from "../../../global.service";
 import type {
   BroadcastFilter,
   CandidateSort,
@@ -451,6 +452,233 @@ export const QQM_SKILL_TAGS = [
 ];
 
 export const QQM_PLATFORM_FEE_PERCENT = 5;
+
+type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data: T;
+};
+
+type ApiQuestLocation = {
+  label?: string;
+  full_address?: string;
+  sub_district?: string;
+  district?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
+  lat?: number | null;
+  lng?: number | null;
+};
+
+type ApiQuestCapacity = {
+  max_runner?: number | null;
+  current_runner_count?: number | null;
+};
+
+export type ApiGiverQuest = {
+  id: string;
+  title: string;
+  category?: string;
+  mode?: string;
+  status?: string;
+  skill_tags?: string[];
+  reward_amount?: string;
+  reward_currency?: string;
+  reward_display?: string;
+  location?: ApiQuestLocation;
+  capacity?: ApiQuestCapacity;
+  escrow?: {
+    escrow_state?: string;
+    reward_amount?: string;
+    platform_fee_amount?: string;
+    total_amount?: string;
+    payment_method?: string;
+    payment_reference?: string;
+  };
+  created_at?: string | null;
+  published_at?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+};
+
+export type ApiGiverAssignment = {
+  id: string;
+  assignment_status?: string;
+  joined_at?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  runner?: {
+    fullname?: string;
+    username?: string;
+  };
+};
+
+export type CreateGiverQuestApiPayload = {
+  title: string;
+  description: string;
+  category: string;
+  mode: "solo" | "group";
+  skill_tags: string[];
+  reward_amount: number;
+  reward_currency: "IDR";
+  max_runner: number;
+  full_address: string;
+  base_radius_km: number;
+};
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/[^\d.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function formatCurrencyDisplay(value: unknown): string {
+  const amount = toNumber(value);
+  if (!amount) return "Rp0";
+  return `Rp${amount.toLocaleString("id-ID")}`;
+}
+
+function mapGiverStatus(status?: string): GiverBroadcastQuest["status"] {
+  switch ((status ?? "").toLowerCase()) {
+    case "open":
+      return "LIVE";
+    case "matched":
+      return "MATCH";
+    case "pending_review":
+      return "WAITING_RUNNER";
+    case "in_progress":
+      return "WAITING_RUNNER";
+    default:
+      return "FROZEN";
+  }
+}
+
+function mapGiverMode(mode?: string): GiverBroadcastQuest["mode"] {
+  return (mode ?? "").toLowerCase() === "group" ? "Ber-Kelompok" : "Per-Individu";
+}
+
+function mapGiverEscrowState(state?: string): GiverBroadcastQuest["escrowState"] {
+  switch ((state ?? "").toLowerCase()) {
+    case "in_progress":
+      return "IN_PROGRESS";
+    case "pending":
+      return "PENDING_CONFIRMATION";
+    case "released":
+      return "RELEASED";
+    case "disputed":
+      return "DISPUTED";
+    case "refund":
+      return "REFUND";
+    case "unpaid":
+      return "UNPAID";
+    default:
+      return "LOCKED";
+  }
+}
+
+function resolveElapsedSeconds(createdAt?: string | null, publishedAt?: string | null): number {
+  const source = publishedAt || createdAt;
+  if (!source) return 0;
+  const timestamp = new Date(source).getTime();
+  if (!Number.isFinite(timestamp)) return 0;
+  return Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+}
+
+export function mapGiverQuestFromApi(quest: ApiGiverQuest): GiverBroadcastQuest {
+  const currentRunnerCount = toNumber(quest.capacity?.current_runner_count);
+  const maxRunner = Math.max(1, toNumber(quest.capacity?.max_runner, 1));
+  const location =
+    quest.location?.label ||
+    quest.location?.sub_district ||
+    quest.location?.district ||
+    quest.location?.city ||
+    quest.location?.full_address ||
+    "Lokasi belum diisi";
+
+  return {
+    id: quest.id,
+    title: quest.title || "Untitled Quest",
+    status: mapGiverStatus(quest.status),
+    mode: mapGiverMode(quest.mode),
+    skillTag: asArray<string>(quest.skill_tags).join(" + ") || quest.category || "General",
+    wageBand: quest.reward_display || formatCurrencyDisplay(quest.reward_amount),
+    slotFilled: currentRunnerCount,
+    slotTotal: maxRunner,
+    baseRadiusKm: 1,
+    maxRadiusKm: 10,
+    elapsedSeedSeconds: resolveElapsedSeconds(quest.created_at, quest.published_at),
+    deadline: quest.ends_at ? new Date(quest.ends_at).toLocaleString("id-ID") : "Belum dijadwalkan",
+    location,
+    estimatedCandidates: Math.max(1, 24 - currentRunnerCount),
+    escrowState: mapGiverEscrowState(quest.escrow?.escrow_state),
+  };
+}
+
+export async function fetchGiverQuestsFromApi(): Promise<GiverBroadcastQuest[]> {
+  const endpoint = GlobalEndpoint().giverQuest.list;
+  const response = await requestJson<ApiEnvelope<{ items?: ApiGiverQuest[] }>>(endpoint);
+  return asArray<ApiGiverQuest>(response.data?.items).map(mapGiverQuestFromApi);
+}
+
+export async function createGiverQuestFromApi(payload: CreateGiverQuestApiPayload): Promise<ApiGiverQuest> {
+  const response = await postJson<CreateGiverQuestApiPayload, ApiEnvelope<ApiGiverQuest>>(
+    GlobalEndpoint().giverQuest.create,
+    payload,
+  );
+  return response.data;
+}
+
+export async function lockGiverQuestEscrowFromApi(questId: string, paymentMethod: string) {
+  const response = await postJson<{ payment_method: string }, ApiEnvelope<{ quest?: ApiGiverQuest; escrow?: unknown }>>(
+    GlobalEndpoint().giverQuest.lockEscrow(questId),
+    { payment_method: paymentMethod },
+  );
+  return response.data;
+}
+
+export async function publishGiverQuestFromApi(questId: string) {
+  const response = await postJson<Record<string, never>, ApiEnvelope<{ quest_id: string; quest_status: string }>>(
+    GlobalEndpoint().giverQuest.publish(questId),
+    {},
+  );
+  return response.data;
+}
+
+export async function fetchGiverQuestAssignmentsFromApi(questId: string): Promise<ApiGiverAssignment[]> {
+  const response = await requestJson<ApiEnvelope<{ items?: ApiGiverAssignment[] }>>(
+    GlobalEndpoint().giverQuest.assignments(questId),
+  );
+  return asArray<ApiGiverAssignment>(response.data?.items);
+}
+
+export async function acceptGiverAssignmentFromApi(assignmentId: string) {
+  return postJson<Record<string, never>, ApiEnvelope<unknown>>(
+    GlobalEndpoint().giverAssignment.accept(assignmentId),
+    {},
+  );
+}
+
+export async function requestGiverAssignmentRevisionFromApi(assignmentId: string) {
+  return postJson<Record<string, never>, ApiEnvelope<unknown>>(
+    GlobalEndpoint().giverAssignment.requestRevision(assignmentId),
+    {},
+  );
+}
+
+export async function disputeGiverAssignmentFromApi(assignmentId: string, reason: string) {
+  return postJson<{ reason: string }, ApiEnvelope<unknown>>(
+    GlobalEndpoint().giverAssignment.dispute(assignmentId),
+    { reason },
+  );
+}
 
 export type EditorQuestType = "SOLO" | "KELOMPOK";
 export type EditorStep = 1 | 2 | 3;

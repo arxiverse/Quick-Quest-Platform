@@ -18,6 +18,7 @@ import {
   type DisputeItem,
   type DisputeSubView,
   type DisputeViewText,
+  useDisputeCenterVM,
 } from "./dispute";
 import { DisputeDetail } from "./page/dispute-detail";
 import { useRole } from "../../role.context";
@@ -173,7 +174,8 @@ function DisputeComponent() {
   const roleContext = resolveDisputeRoleContext(role, isGiverVerified);
   const disputeRoleData = resolveDisputeRoleData(roleContext);
   const disputeViewText = disputeRoleData.viewCopy;
-  const disputeItems = disputeRoleData.items;
+  const disputeCenterVM = useDisputeCenterVM(disputeRoleData.items);
+  const disputeItems = disputeCenterVM.items;
 
   const [subView, setSubView] = useState<DisputeSubView>(null);
   const [filterStatus, setFilterStatus] = useState<DisputeFilterOption>("ALL");
@@ -204,6 +206,11 @@ function DisputeComponent() {
           <p className="mt-1 text-sm text-base-content/65">
             {disputeViewText.hero.description}
           </p>
+          {disputeCenterVM.isLoading ? (
+            <p className="mt-2 text-xs font-semibold text-primary">Sinkronisasi dispute live...</p>
+          ) : disputeCenterVM.errorMessage ? (
+            <p className="mt-2 text-xs font-semibold text-warning">Mode fallback seed: {disputeCenterVM.errorMessage}</p>
+          ) : null}
         </div>
       </Surface>
 

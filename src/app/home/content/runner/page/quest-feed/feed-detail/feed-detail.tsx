@@ -10,8 +10,8 @@ export function RunnerQuestFeedDetailPage({
 }: {
   questId: string;
   onBack: () => void;
-  onTakeQuest: () => void;
-  onJoinPartyLobby: () => void;
+  onTakeQuest: () => void | Promise<void>;
+  onJoinPartyLobby: () => void | Promise<void>;
 }) {
   const quest = getRunnerQuestFeedDetailSeed(questId);
 

@@ -7,7 +7,12 @@ import {
   resolveRunnerEscrowFlowIndex,
   tickRunnerCountdown,
 } from "../../runner";
-import { getRunnerActiveQuestSeed } from "./active-quest.service";
+import {
+  fetchRunnerActiveQuestLive,
+  finishRunnerActiveQuestLive,
+  getRunnerActiveQuestSeed,
+  startRunnerActiveQuestLive,
+} from "./active-quest.service";
 
 export {
   createInitialRunnerCountdown,
@@ -18,4 +23,10 @@ export {
   resolveRunnerAutoReleaseUrgency,
   resolveRunnerEscrowFlowIndex,
   tickRunnerCountdown,
+};
+
+export {
+  fetchRunnerActiveQuestLive,
+  finishRunnerActiveQuestLive,
+  startRunnerActiveQuestLive,
 };

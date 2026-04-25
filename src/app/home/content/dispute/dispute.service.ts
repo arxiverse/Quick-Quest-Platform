@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────
 // dispute.service.ts — Dummy data for Dispute Center
 // ─────────────────────────────────────────────────
+import GlobalEndpoint, { postJson, requestJson } from "../../../global.service";
 import type { DisputeItem, DisputeLayer } from "./dispute";
 
 export const DISPUTE_FILTER_OPTIONS_SEED = [
@@ -9,6 +10,150 @@ export const DISPUTE_FILTER_OPTIONS_SEED = [
   "UNDER_REVIEW",
   "RESOLVED_RUNNER",
 ] as const;
+
+type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data: T;
+};
+
+type ApiDisputeEvidence = {
+  id?: string;
+  uploader?: string;
+  type?: string;
+  label?: string;
+  uploadedAt?: string;
+  uploaded_at?: string;
+  url?: string;
+  file_url?: string;
+};
+
+type ApiDisputeTimeline = {
+  status?: string;
+  time?: string;
+  description?: string;
+};
+
+type ApiDisputeItem = {
+  id: string;
+  questId?: string;
+  questTitle?: string;
+  assignmentId?: string;
+  amount?: string;
+  raisedBy?: string;
+  raisedAt?: string;
+  status?: string;
+  autoReleaseHoursLeft?: number;
+  evidenceDeadline?: string;
+  giverEvidence?: ApiDisputeEvidence[];
+  runnerEvidence?: ApiDisputeEvidence[];
+  mediatorNote?: string;
+  resolvedAt?: string;
+  timeline?: ApiDisputeTimeline[];
+};
+
+export type CreateDisputeEvidencePayload = {
+  type: "PHOTO" | "VIDEO" | "NOTE";
+  label: string;
+  note_text?: string;
+  file_name?: string;
+  file_url?: string;
+};
+
+function normalizeStatus(status?: string): DisputeItem["status"] {
+  switch ((status ?? "").toLowerCase()) {
+    case "auto_timer":
+      return "AUTO_TIMER";
+    case "under_review":
+      return "UNDER_REVIEW";
+    case "resolved_giver":
+      return "RESOLVED_GIVER";
+    case "resolved_partial":
+      return "RESOLVED_PARTIAL";
+    case "dismissed":
+      return "DISMISSED";
+    case "resolved_runner":
+      return "RESOLVED_RUNNER";
+    default:
+      return "EVIDENCE_SUBMISSION";
+  }
+}
+
+function normalizeParty(party?: string): "GIVER" | "RUNNER" {
+  return (party ?? "").toUpperCase() === "GIVER" ? "GIVER" : "RUNNER";
+}
+
+function normalizeEvidenceType(type?: string): "PHOTO" | "VIDEO" | "NOTE" {
+  const normalized = (type ?? "").toUpperCase();
+  return normalized === "VIDEO" || normalized === "NOTE" ? normalized : "PHOTO";
+}
+
+function normalizeDate(value?: string): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toLocaleString("id-ID") : value;
+}
+
+function mapEvidence(item: ApiDisputeEvidence) {
+  return {
+    id: item.id || `EV-${Date.now()}`,
+    uploader: normalizeParty(item.uploader),
+    type: normalizeEvidenceType(item.type),
+    label: item.label || "Evidence",
+    uploadedAt: normalizeDate(item.uploadedAt || item.uploaded_at),
+    url: item.url || item.file_url,
+  };
+}
+
+export function mapDisputeFromApi(item: ApiDisputeItem): DisputeItem {
+  const status = normalizeStatus(item.status);
+  return {
+    id: item.id,
+    questId: item.questId || "-",
+    questTitle: item.questTitle || "Quest dispute",
+    amount: item.amount || "Rp0",
+    raisedBy: normalizeParty(item.raisedBy),
+    raisedAt: normalizeDate(item.raisedAt),
+    status,
+    autoReleaseHoursLeft: item.autoReleaseHoursLeft ?? 0,
+    evidenceDeadline: normalizeDate(item.evidenceDeadline),
+    giverEvidence: (item.giverEvidence ?? []).map(mapEvidence),
+    runnerEvidence: (item.runnerEvidence ?? []).map(mapEvidence),
+    mediatorNote: item.mediatorNote,
+    resolvedAt: item.resolvedAt ? normalizeDate(item.resolvedAt) : undefined,
+    timeline:
+      item.timeline?.map((event) => ({
+        status: normalizeStatus(event.status),
+        time: normalizeDate(event.time),
+        description: event.description || "-",
+      })) ?? [{ status, time: normalizeDate(item.raisedAt), description: "Dispute dibuat." }],
+  };
+}
+
+export async function fetchDisputesFromApi(): Promise<DisputeItem[]> {
+  const response = await requestJson<ApiEnvelope<{ items?: ApiDisputeItem[] }>>(
+    GlobalEndpoint().dispute.list,
+  );
+  return Array.isArray(response.data?.items) ? response.data.items.map(mapDisputeFromApi) : [];
+}
+
+export async function fetchDisputeDetailFromApi(disputeId: string): Promise<DisputeItem> {
+  const response = await requestJson<ApiEnvelope<ApiDisputeItem>>(
+    GlobalEndpoint().dispute.detail(disputeId),
+  );
+  return mapDisputeFromApi(response.data);
+}
+
+export async function createDisputeEvidenceFromApi(
+  disputeId: string,
+  payload: CreateDisputeEvidencePayload,
+): Promise<DisputeItem> {
+  const response = await postJson<CreateDisputeEvidencePayload, ApiEnvelope<ApiDisputeItem>>(
+    GlobalEndpoint().dispute.evidence(disputeId),
+    payload,
+  );
+  return mapDisputeFromApi(response.data);
+}
 
 export const disputeFilterLabelSeed: Record<
   (typeof DISPUTE_FILTER_OPTIONS_SEED)[number],
@@ -405,4 +550,3 @@ export const disputeRoleDataSeed: Record<"runner" | "giver", DisputeRoleDataSeed
     items: disputeGiverItems,
   },
 };
-

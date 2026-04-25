@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   GIVER_SUBVIEW_STORAGE_KEY,
+  createGiverQuestFromApi,
+  acceptGiverAssignmentFromApi,
+  disputeGiverAssignmentFromApi,
+  fetchGiverQuestsFromApi,
+  fetchGiverQuestAssignmentsFromApi,
   giverBriefChecklistItems,
   giverBroadcastFiltersSeed,
   giverBroadcastQuests,
@@ -14,6 +19,10 @@ import {
   type GiverViewCopy,
   QQM_SKILL_TAGS,
   QQM_PLATFORM_FEE_PERCENT,
+  lockGiverQuestEscrowFromApi,
+  publishGiverQuestFromApi,
+  requestGiverAssignmentRevisionFromApi,
+  type ApiGiverAssignment,
   type EditorQuestType,
   type EditorStep,
 } from "./giver.service";
@@ -45,7 +54,7 @@ export type GiverBroadcastQuest = {
   deadline: string;
   location: string;
   estimatedCandidates: number;
-  escrowState: "LOCKED" | "IN_PROGRESS" | "PENDING_CONFIRMATION";
+  escrowState: "UNPAID" | "LOCKED" | "IN_PROGRESS" | "PENDING_CONFIRMATION" | "RELEASED" | "DISPUTED" | "REFUND";
 };
 
 export type GiverCandidateStatus = "Ready" | "On Quest" | "Standby";
@@ -110,6 +119,13 @@ export type GiverRadiusRuntime = {
 
 export type GiverViewText = GiverViewCopy;
 
+export type GiverAssignmentAuditItem = {
+  id: string;
+  status: string;
+  runnerName: string;
+  finishedAt: string;
+};
+
 export const giverBroadcastFilters = [...giverBroadcastFiltersSeed];
 export const giverCandidateSortOptions = [...giverCandidateSortOptionsSeed];
 export const giverViewText: GiverViewText = giverViewCopySeed;
@@ -124,8 +140,12 @@ export function resolveGiverBroadcastStatusClass(status: GiverBroadcastStatus): 
 export function resolveGiverEscrowStateClass(
   state: GiverBroadcastQuest["escrowState"],
 ): string {
+  if (state === "UNPAID") return "bg-base-200 text-base-content/60";
   if (state === "IN_PROGRESS") return "bg-[#DCFCE7] text-[#166534]";
   if (state === "PENDING_CONFIRMATION") return "bg-[#E9D5FF] text-[#6D28D9]";
+  if (state === "RELEASED") return "bg-[#DCFCE7] text-[#166534]";
+  if (state === "DISPUTED") return "bg-[#FECACA] text-[#991B1B]";
+  if (state === "REFUND") return "bg-[#FEF3C7] text-[#92400E]";
   return "bg-[#DBEAFE] text-[#1D4ED8]";
 }
 
@@ -279,6 +299,86 @@ export {
   giverPostQuestInsights,
 };
 
+export function useGiverDashboardVM() {
+  const [quests, setQuests] = useState<GiverBroadcastQuest[]>(giverBroadcastQuests);
+  const [assignmentsByQuest, setAssignmentsByQuest] = useState<Record<string, GiverAssignmentAuditItem[]>>({});
+  const [auditActionId, setAuditActionId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  function mapAssignment(item: ApiGiverAssignment): GiverAssignmentAuditItem {
+    return {
+      id: item.id,
+      status: item.assignment_status ?? "unknown",
+      runnerName: item.runner?.fullname || item.runner?.username || "Runner",
+      finishedAt: item.finished_at ? new Date(item.finished_at).toLocaleString("id-ID") : "-",
+    };
+  }
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const nextQuests = await fetchGiverQuestsFromApi();
+      const resolvedQuests = nextQuests.length > 0 ? nextQuests : giverBroadcastQuests;
+      setQuests(resolvedQuests);
+
+      const assignmentPairs = await Promise.all(
+        resolvedQuests.map(async (quest) => {
+          try {
+            const assignments = await fetchGiverQuestAssignmentsFromApi(quest.id);
+            return [quest.id, assignments.map(mapAssignment)] as const;
+          } catch {
+            return [quest.id, []] as const;
+          }
+        }),
+      );
+      setAssignmentsByQuest(Object.fromEntries(assignmentPairs));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengambil quest giver.");
+      setQuests(giverBroadcastQuests);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const auditAssignment = useCallback(async (
+    assignmentId: string,
+    action: "accept" | "revision" | "dispute",
+  ) => {
+    setAuditActionId(assignmentId);
+    setErrorMessage("");
+    try {
+      if (action === "accept") {
+        await acceptGiverAssignmentFromApi(assignmentId);
+      } else if (action === "revision") {
+        await requestGiverAssignmentRevisionFromApi(assignmentId);
+      } else {
+        await disputeGiverAssignmentFromApi(assignmentId, "Giver membuka dispute dari panel audit.");
+      }
+      await refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal audit assignment.");
+    } finally {
+      setAuditActionId("");
+    }
+  }, [refresh]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return {
+    quests,
+    assignmentsByQuest,
+    auditActionId,
+    isLoading,
+    errorMessage,
+    refresh,
+    auditAssignment,
+  };
+}
+
 export function formatRupiah(val: string): string {
   const digits = val.replace(/\D/g, "");
   if (!digits) return "";
@@ -291,13 +391,22 @@ export function parseRupiah(val: string): number {
 
 export function useQuestEditorVM() {
   const [step, setStep] = useState<EditorStep>(1);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Event Organizer");
+  const [locationAddress, setLocationAddress] = useState("Jakarta Selatan (GPS Auto)");
   const [questType, setQuestType] = useState<EditorQuestType>("SOLO");
   const [slotCount, setSlotCount] = useState(1);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [upahMin, setUpahMin] = useState("");
   const [upahMax, setUpahMax] = useState("");
   const [baseRadius, setBaseRadius] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState("virtual_account");
   const [escrowLocked, setEscrowLocked] = useState(false);
+  const [createdQuestId, setCreatedQuestId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const upahMinNum = parseRupiah(upahMin);
   const upahMaxNum = parseRupiah(upahMax);
@@ -313,13 +422,86 @@ export function useQuestEditorVM() {
     );
   }
 
-  const canProceedStep1 = selectedSkills.length > 0 && upahMin !== "" && upahMax !== "" && upahMaxNum >= upahMinNum;
+  const canProceedStep1 =
+    title.trim() !== "" &&
+    description.trim() !== "" &&
+    selectedSkills.length > 0 &&
+    upahMin !== "" &&
+    upahMax !== "" &&
+    upahMaxNum >= upahMinNum;
   const canProceedStep2 = true;
   const canBroadcast = escrowLocked;
+
+  async function createDraftQuest() {
+    setIsSubmitting(true);
+    setErrorMessage("");
+    setStatusMessage("");
+    try {
+      const quest = await createGiverQuestFromApi({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        mode: questType === "KELOMPOK" ? "group" : "solo",
+        skill_tags: selectedSkills,
+        reward_amount: upahMaxNum,
+        reward_currency: "IDR",
+        max_runner: questType === "KELOMPOK" ? slotCount : 1,
+        full_address: locationAddress.trim(),
+        base_radius_km: baseRadius,
+      });
+      setCreatedQuestId(quest.id);
+      setStatusMessage("Draft quest berhasil dibuat. Lanjut deposit escrow.");
+      setStep(3);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal membuat draft quest.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function lockEscrow() {
+    if (!createdQuestId) {
+      await createDraftQuest();
+      return;
+    }
+    setIsSubmitting(true);
+    setErrorMessage("");
+    try {
+      await lockGiverQuestEscrowFromApi(createdQuestId, paymentMethod);
+      setEscrowLocked(true);
+      setStatusMessage("Escrow berhasil dikunci. Quest siap broadcast.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengunci escrow.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function publishQuest() {
+    if (!createdQuestId || !escrowLocked) return;
+    setIsSubmitting(true);
+    setErrorMessage("");
+    try {
+      await publishGiverQuestFromApi(createdQuestId);
+      setStatusMessage("Quest berhasil dibroadcast ke feed runner.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal publish quest.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return {
     step,
     setStep,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    category,
+    setCategory,
+    locationAddress,
+    setLocationAddress,
     questType,
     setQuestType,
     slotCount,
@@ -332,8 +514,14 @@ export function useQuestEditorVM() {
     setUpahMax,
     baseRadius,
     setBaseRadius,
+    paymentMethod,
+    setPaymentMethod,
     escrowLocked,
     setEscrowLocked,
+    createdQuestId,
+    isSubmitting,
+    statusMessage,
+    errorMessage,
     upahMinNum,
     upahMaxNum,
     totalEscrowMin,
@@ -346,5 +534,8 @@ export function useQuestEditorVM() {
     canBroadcast,
     skillTags: QQM_SKILL_TAGS,
     platformFeePercent: QQM_PLATFORM_FEE_PERCENT,
+    createDraftQuest,
+    lockEscrow,
+    publishQuest,
   };
 }

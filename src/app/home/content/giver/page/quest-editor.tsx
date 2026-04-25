@@ -11,6 +11,14 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
   const {
     step,
     setStep,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    category,
+    setCategory,
+    locationAddress,
+    setLocationAddress,
     questType,
     setQuestType,
     slotCount,
@@ -23,8 +31,13 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
     setUpahMax,
     baseRadius,
     setBaseRadius,
+    paymentMethod,
+    setPaymentMethod,
     escrowLocked,
-    setEscrowLocked,
+    createdQuestId,
+    isSubmitting,
+    statusMessage,
+    errorMessage,
     upahMinNum,
     upahMaxNum,
     totalEscrowMin,
@@ -36,6 +49,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
     canProceedStep2,
     canBroadcast,
     skillTags: SKILL_TAGS,
+    createDraftQuest,
+    lockEscrow,
+    publishQuest,
   } = useQuestEditorVM();
 
   return (
@@ -119,6 +135,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   type="text"
                   className="input input-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100"
                   placeholder="e.g. Bongkar Muat Barang Gudang"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
                 />
               </div>
 
@@ -129,6 +147,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 <textarea
                   className="textarea textarea-bordered w-full mt-1.5 h-28 focus:border-[#38BDF8] bg-base-100"
                   placeholder="Jelaskan secara rinci tugas runner, alat yang diperlukan, dan kondisi lapangan..."
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
                 />
               </div>
 
@@ -147,7 +167,11 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   <label className="text-xs font-bold text-base-content/70">
                     Kategori
                   </label>
-                  <select className="select select-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100">
+                  <select
+                    className="select select-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100"
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value)}
+                  >
                     <option>Event Organizer</option>
                     <option>Gudang & Logistik</option>
                     <option>IT & Jaringan</option>
@@ -363,12 +387,13 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   GPS otomatis atau isi manual jika berbeda.
                 </p>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className="input input-bordered flex-1 focus:border-[#38BDF8] bg-base-100 text-sm"
-                    placeholder="Jl. Jenderal Sudirman No. 1..."
-                    defaultValue="Jakarta Selatan (GPS Auto)"
-                  />
+                <input
+                  type="text"
+                  className="input input-bordered flex-1 focus:border-[#38BDF8] bg-base-100 text-sm"
+                  placeholder="Jl. Jenderal Sudirman No. 1..."
+                  value={locationAddress}
+                  onChange={(event) => setLocationAddress(event.target.value)}
+                />
                   <button
                     type="button"
                     className="btn h-11.5 min-h-11.5 rounded-[10px] border-none bg-[#38BDF8]/20 px-3 text-[#38BDF8] hover:bg-[#38BDF8]/30"
@@ -477,10 +502,10 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   <button
                     type="button"
                     disabled={!canProceedStep2}
-                    onClick={() => setStep(3)}
+                    onClick={createDraftQuest}
                     className="btn h-11 flex-1 rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95"
                   >
-                    Lanjut Deposit →
+                    {isSubmitting ? "Membuat Draft..." : "Buat Draft →"}
                   </button>
                 </div>
               </div>
@@ -507,6 +532,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 <p className="text-xs font-bold uppercase tracking-wide text-base-content/55">
                   Rincian Pembayaran Escrow
                 </p>
+                {createdQuestId ? (
+                  <p className="text-[11px] font-semibold text-primary">Draft ID: {createdQuestId}</p>
+                ) : null}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-base-content/65">
@@ -629,6 +657,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                         type="radio"
                         name="payment"
                         className="radio radio-sm"
+                        checked={paymentMethod === (method.id === "va" ? "virtual_account" : method.id)}
+                        onChange={() => setPaymentMethod(method.id === "va" ? "virtual_account" : method.id)}
                       />
                       <div>
                         <p className="text-sm font-semibold text-base-content">
@@ -646,8 +676,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
               <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={() => setEscrowLocked(true)}
-                  disabled={escrowLocked}
+                  onClick={lockEscrow}
+                  disabled={escrowLocked || isSubmitting}
                   className={cn(
                     "btn h-12 w-full rounded-[10px] border-none font-bold shadow-lg text-sm transition-all active:scale-95",
                     escrowLocked
@@ -657,12 +687,15 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 >
                   {escrowLocked
                     ? "✓ Escrow Berhasil Di-lock!"
-                    : "💳 Deposit Escrow Sekarang"}
+                    : isSubmitting
+                      ? "Memproses Escrow..."
+                      : "💳 Deposit Escrow Sekarang"}
                 </button>
 
                 <button
                   type="button"
                   disabled={!canBroadcast}
+                  onClick={publishQuest}
                   className="btn h-12 w-full rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {canBroadcast
@@ -690,6 +723,16 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   </p>
                 </div>
               )}
+              {statusMessage ? (
+                <div className="rounded-[10px] border border-success/30 bg-success/10 p-3 text-xs font-semibold text-success">
+                  {statusMessage}
+                </div>
+              ) : null}
+              {errorMessage ? (
+                <div className="rounded-[10px] border border-error/30 bg-error/10 p-3 text-xs font-semibold text-error">
+                  {errorMessage}
+                </div>
+              ) : null}
             </div>
           </div>
         )}

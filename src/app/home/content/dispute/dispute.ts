@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────
 // dispute.ts — Types for QQM Dispute Center
 // ─────────────────────────────────────────────────
+import { useCallback, useEffect, useState } from "react";
 import {
   DISPUTE_FILTER_OPTIONS_SEED,
   disputeFilterLabelSeed,
@@ -10,8 +11,12 @@ import {
   disputeStatusMeta,
   disputeRoleDataSeed,
   disputeViewCopySeed,
+  createDisputeEvidenceFromApi,
+  fetchDisputeDetailFromApi,
+  fetchDisputesFromApi,
   type DisputeRoleDataSeed,
   type DisputeViewCopy,
+  type CreateDisputeEvidencePayload,
 } from "./dispute.service";
 import type { RoleMode } from "../../role.util";
 
@@ -186,6 +191,81 @@ export function buildDisputeStatCards(items: DisputeItem[], viewText: DisputeVie
       tone: "bg-base-200 text-base-content/70",
     },
   ];
+}
+
+export function useDisputeCenterVM(fallbackItems: DisputeItem[]) {
+  const [items, setItems] = useState<DisputeItem[]>(fallbackItems);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const liveItems = await fetchDisputesFromApi();
+      setItems(liveItems.length > 0 ? liveItems : fallbackItems);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengambil dispute.");
+      setItems(fallbackItems);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fallbackItems]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return {
+    items,
+    isLoading,
+    errorMessage,
+    refresh,
+  };
+}
+
+export function useDisputeDetailVM(disputeId: string, fallbackItem: DisputeItem) {
+  const [item, setItem] = useState<DisputeItem>(fallbackItem);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      setItem(await fetchDisputeDetailFromApi(disputeId));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengambil detail dispute.");
+      setItem(fallbackItem);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [disputeId, fallbackItem]);
+
+  const submitEvidence = useCallback(async (payload: CreateDisputeEvidencePayload) => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      setItem(await createDisputeEvidenceFromApi(disputeId, payload));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal mengirim evidence.");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [disputeId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return {
+    item,
+    isLoading,
+    errorMessage,
+    refresh,
+    submitEvidence,
+  };
 }
 
 export { disputeItems, disputeLayers, disputeStatusMeta };

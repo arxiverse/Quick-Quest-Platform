@@ -65,6 +65,46 @@ const ENDPOINTS = {
       history: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification/history"),
     },
   },
+  quest: {
+    list: joinApiUrl(API_BASE_URLS.stream, "/api/quests"),
+    detail: (questId: string) => joinApiUrl(API_BASE_URLS.stream, `/api/quests/${questId}`),
+  },
+  giverQuest: {
+    list: joinApiUrl(API_BASE_URLS.stream, "/api/giver/quests"),
+    create: joinApiUrl(API_BASE_URLS.stream, "/api/giver/quests"),
+    lockEscrow: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/quests/${questId}/escrow/lock`),
+    publish: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/quests/${questId}/publish`),
+    assignments: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/quests/${questId}/assignments`),
+  },
+  giverAssignment: {
+    accept: (assignmentId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/assignments/${assignmentId}/accept`),
+    requestRevision: (assignmentId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/assignments/${assignmentId}/request-revision`),
+    dispute: (assignmentId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/assignments/${assignmentId}/dispute`),
+  },
+  runnerQuest: {
+    active: joinApiUrl(API_BASE_URLS.stream, "/api/runner/quests/active"),
+    take: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/runner/quests/${questId}/take`),
+    start: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/runner/quests/${questId}/start`),
+    finish: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/runner/quests/${questId}/finish`),
+  },
+  dispute: {
+    list: joinApiUrl(API_BASE_URLS.stream, "/api/disputes"),
+    detail: (disputeId: string) => joinApiUrl(API_BASE_URLS.stream, `/api/disputes/${disputeId}`),
+    create: joinApiUrl(API_BASE_URLS.stream, "/api/disputes"),
+    evidence: (disputeId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/disputes/${disputeId}/evidence`),
+    mediate: (disputeId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/disputes/${disputeId}/mediate`),
+  },
 };
 
 export const GOOGLE_MAPS_CONFIG = {

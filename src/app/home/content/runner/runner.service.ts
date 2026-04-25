@@ -1,3 +1,4 @@
+import GlobalEndpoint, { postJson, requestJson } from "../../../global.service";
 import type {
   RunnerActiveQuest,
   RunnerAvailabilitySlot,
@@ -12,6 +13,206 @@ import type {
 } from "./runner";
 
 export const RUNNER_SUBVIEW_STORAGE_KEY_SEED = "nvrs-qqm-runner-subview-v1";
+
+type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data: T;
+};
+
+type ApiQuest = {
+  id: string;
+  title: string;
+  category?: string;
+  mode?: "solo" | "group" | string;
+  status?: string;
+  skill_tags?: string[];
+  reward_amount?: string;
+  reward_display?: string;
+  distance_km?: number | null;
+  matching?: {
+    active_radius_km?: number;
+    next_expand_in_seconds?: number;
+  };
+  giver?: {
+    fullname?: string;
+    username?: string;
+  };
+  location?: {
+    label?: string;
+    full_address?: string;
+    sub_district?: string;
+    district?: string;
+    city?: string;
+    lat?: number | null;
+    lng?: number | null;
+  };
+  capacity?: {
+    max_runner?: number | null;
+    current_runner_count?: number | null;
+  };
+  description?: string;
+  created_at?: string | null;
+  published_at?: string | null;
+};
+
+type ApiRunnerAssignment = {
+  assignment_id?: string;
+  assignment_status?: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  quest?: ApiQuest;
+};
+
+let runnerQuestFeedCache: RunnerQuestFeedItem[] = [];
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/[^\d.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function formatCurrency(value: unknown): string {
+  const amount = toNumber(value);
+  if (!amount) return "Rp0";
+  return `Rp ${amount.toLocaleString("id-ID")}`;
+}
+
+function formatDate(value?: string | null): string {
+  if (!value) return "Baru saja";
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toLocaleString("id-ID") : "Baru saja";
+}
+
+function normalizeRunnerEscrow(status?: string): RunnerActiveQuest["escrowState"] {
+  switch ((status ?? "").toLowerCase()) {
+    case "active":
+    case "in_progress":
+      return "IN_PROGRESS";
+    case "finished":
+    case "pending_review":
+    case "pending":
+      return "PENDING_CONFIRMATION";
+    case "completed":
+      return "RELEASED";
+    default:
+      return "LOCKED";
+  }
+}
+
+function normalizeRunnerStatus(status?: string): RunnerActiveQuest["status"] {
+  switch ((status ?? "").toLowerCase()) {
+    case "active":
+    case "in_progress":
+      return "IN_PROGRESS";
+    case "finished":
+    case "pending_review":
+      return "PENDING_CONFIRMATION";
+    case "completed":
+      return "COMPLETED";
+    default:
+      return "HEADING_TO_LOCATION";
+  }
+}
+
+export function mapRunnerQuestFeedFromApi(quest: ApiQuest): RunnerQuestFeedItem {
+  const currentCount = toNumber(quest.capacity?.current_runner_count);
+  const maxRunner = Math.max(1, toNumber(quest.capacity?.max_runner, 1));
+  const mode = (quest.mode ?? "solo").toLowerCase() === "group" ? "group" : "solo";
+  const distance = toNumber(quest.distance_km, toNumber(quest.matching?.active_radius_km, 1));
+
+  return {
+    id: quest.id,
+    title: quest.title || "Untitled Quest",
+    giver: quest.giver?.fullname || quest.giver?.username || "Verified Giver",
+    giverBadge: "Verified Giver",
+    category: quest.category || (quest.skill_tags ?? []).join(" + ") || "General",
+    reward: quest.reward_display || formatCurrency(quest.reward_amount),
+    distanceKm: Number(distance.toFixed(1)),
+    locationLabel: quest.location?.label || quest.location?.sub_district || quest.location?.city || "Area terdekat",
+    locationAddress: quest.location?.full_address || quest.location?.label || "Alamat quest belum tersedia",
+    mode,
+    matchScore: Math.max(50, Math.min(98, Math.round(100 - distance * 6))),
+    slotFilled: currentCount,
+    slotTotal: maxRunner,
+    postedAt: formatDate(quest.published_at || quest.created_at),
+    estimatedDuration: "1-2 jam",
+    briefSummary: quest.description || "Quest live dari backend QuickQuest.",
+    description: quest.description || "Detail pekerjaan akan mengikuti brief dari giver.",
+    targetChecklist: [
+      "Ikuti brief giver sampai selesai.",
+      "Dokumentasikan hasil kerja jika diperlukan.",
+      "Tekan Selesai Kerja setelah pekerjaan rampung.",
+    ],
+  };
+}
+
+function mapRunnerActiveQuestFromApi(item: ApiRunnerAssignment): RunnerActiveQuest {
+  const quest = item.quest ?? { id: "unknown", title: "Quest aktif" };
+  return {
+    id: quest.id,
+    questTitle: quest.title || "Quest aktif",
+    giverName: quest.giver?.fullname || quest.giver?.username || "Verified Giver",
+    escrowState: normalizeRunnerEscrow(item.assignment_status || quest.status),
+    status: normalizeRunnerStatus(item.assignment_status || quest.status),
+    reward: quest.reward_display || formatCurrency(quest.reward_amount),
+    locationAddress: quest.location?.full_address || quest.location?.label || "Lokasi quest belum tersedia",
+    workStartedAt: item.started_at ? formatDate(item.started_at) : null,
+    workFinishedAt: item.finished_at ? formatDate(item.finished_at) : null,
+    autoReleaseHoursLeft: item.assignment_status === "finished" ? 24 : 0,
+    ppGain: "+0 PP",
+  };
+}
+
+export async function fetchRunnerBroadcastQuestsFromApi(coords?: RunnerRawCoords): Promise<RunnerQuestFeedItem[]> {
+  const url = new URL(GlobalEndpoint().quest.list);
+  if (coords) {
+    url.searchParams.set("runner_lat", `${coords.lat}`);
+    url.searchParams.set("runner_lng", `${coords.lng}`);
+  }
+  const response = await requestJson<ApiEnvelope<{ items?: ApiQuest[] }>>(url.toString());
+  runnerQuestFeedCache = Array.isArray(response.data?.items)
+    ? response.data.items.map(mapRunnerQuestFeedFromApi)
+    : [];
+  return runnerQuestFeedCache;
+}
+
+export function getCachedRunnerQuestFeed(): RunnerQuestFeedItem[] {
+  return runnerQuestFeedCache.length > 0 ? runnerQuestFeedCache : runnerQuestFeedSeed;
+}
+
+export async function takeRunnerQuestFromApi(questId: string) {
+  return postJson<Record<string, never>, ApiEnvelope<unknown>>(
+    GlobalEndpoint().runnerQuest.take(questId),
+    {},
+  );
+}
+
+export async function fetchRunnerActiveQuestsFromApi(): Promise<RunnerActiveQuest[]> {
+  const response = await requestJson<ApiEnvelope<{ items?: ApiRunnerAssignment[] }>>(
+    GlobalEndpoint().runnerQuest.active,
+  );
+  return Array.isArray(response.data?.items)
+    ? response.data.items.map(mapRunnerActiveQuestFromApi)
+    : [];
+}
+
+export async function startRunnerQuestFromApi(questId: string) {
+  return postJson<Record<string, never>, ApiEnvelope<unknown>>(
+    GlobalEndpoint().runnerQuest.start(questId),
+    {},
+  );
+}
+
+export async function finishRunnerQuestFromApi(questId: string) {
+  return postJson<Record<string, never>, ApiEnvelope<unknown>>(
+    GlobalEndpoint().runnerQuest.finish(questId),
+    {},
+  );
+}
 
 export type RunnerViewCopy = {
   hero: {

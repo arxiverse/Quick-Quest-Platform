@@ -1,4 +1,5 @@
 import {
+  getCachedRunnerQuestFeed,
   runnerQuestFeedSeed,
   type RunnerQuestFeedItem,
 } from "../../../runner.service";
@@ -6,5 +7,9 @@ import {
 export function getRunnerQuestFeedDetailSeed(
   questId: string,
 ): RunnerQuestFeedItem | null {
-  return runnerQuestFeedSeed.find((quest) => quest.id === questId) ?? null;
+  return (
+    getCachedRunnerQuestFeed().find((quest) => quest.id === questId) ??
+    runnerQuestFeedSeed.find((quest) => quest.id === questId) ??
+    null
+  );
 }
