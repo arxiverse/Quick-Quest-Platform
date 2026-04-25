@@ -820,3 +820,138 @@ export const analysisRoleDataSeed: Record<"runner" | "giver", AnalysisRoleDataSe
     targetImpianSeed: analysisGiverTargetImpianSeed,
   },
 };
+
+export const analysisNestedMenuSeed = {
+  runner: [
+    {
+      key: "runner_metrics",
+      label: "Metrics",
+      description: "Pendalaman metrik runner dari level overview sampai per-metrik.",
+    },
+    {
+      key: "runner_time_range",
+      label: "Time Range",
+      description: "Perbandingan periodik untuk membaca perubahan performa.",
+    },
+    {
+      key: "runner_funnel",
+      label: "Funnel",
+      description: "Deteksi bottleneck dari posted sampai released/disputed.",
+    },
+    {
+      key: "runner_scope_analytics",
+      label: "Scope",
+      description: "Kontrol radius, kandidat, dan area panas.",
+    },
+    {
+      key: "runner_supply_demand",
+      label: "Supply-Demand",
+      description: "Keseimbangan demand quest vs supply runner.",
+    },
+    {
+      key: "runner_sla_response",
+      label: "SLA",
+      description: "Kontrol response time dan outlier operasional.",
+    },
+    {
+      key: "runner_escrow_health",
+      label: "Escrow",
+      description: "Monitoring distribusi state escrow dan aging.",
+    },
+    {
+      key: "runner_risk_panel",
+      label: "Risk",
+      description: "Pemantauan risiko dispute lintas dimensi.",
+    },
+    {
+      key: "runner_pp_intelligence",
+      label: "PP Intel",
+      description: "Analisis growth PP per skill dan decay impact.",
+    },
+    {
+      key: "runner_cohort_retention",
+      label: "Cohort",
+      description: "Retensi cohort untuk kualitas pengalaman jangka panjang.",
+    },
+    {
+      key: "runner_insight_panel",
+      label: "Insight",
+      description: "Ringkasan insight prioritas untuk aksi cepat.",
+    },
+  ],
+  giver: [
+    {
+      key: "giver_metrics",
+      label: "Metrics",
+      description: "Pendalaman metrik giver dari overview sampai per-metrik.",
+    },
+    {
+      key: "giver_time_range",
+      label: "Time Range",
+      description: "Perbandingan periodik performa broadcast.",
+    },
+    {
+      key: "giver_funnel",
+      label: "Funnel",
+      description: "Deteksi bottleneck conversion broadcast.",
+    },
+    {
+      key: "giver_scope_analytics",
+      label: "Scope",
+      description: "Kontrol radius dan coverage kandidat runner.",
+    },
+    {
+      key: "giver_supply_demand",
+      label: "Supply-Demand",
+      description: "Monitoring demand giver vs supply runner.",
+    },
+    {
+      key: "giver_sla_response",
+      label: "SLA",
+      description: "Kontrol match/approval time dan outlier.",
+    },
+    {
+      key: "giver_escrow_health",
+      label: "Escrow",
+      description: "Kesehatan pipeline escrow dan aging.",
+    },
+    {
+      key: "giver_risk_panel",
+      label: "Risk",
+      description: "Mitigasi risiko dispute dari perspektif giver.",
+    },
+    {
+      key: "giver_pp_intelligence",
+      label: "PP Intel",
+      description: "Analisis growth skill runner yang berdampak ke giver.",
+    },
+    {
+      key: "giver_cohort_retention",
+      label: "Cohort",
+      description: "Retensi cohort untuk kestabilan ekosistem.",
+    },
+    {
+      key: "giver_insight_panel",
+      label: "Insight",
+      description: "Insight operasional prioritas mode giver.",
+    },
+  ],
+} as const;
+
+export const analysisRunnerMetricSubViewSeed = [
+  "runner_metric_gmv",
+  "runner_metric_match_rate",
+  "runner_metric_fill_time",
+  "runner_metric_completion",
+  "runner_metric_dispute",
+  "runner_metric_escrow_released",
+] as const;
+
+export const analysisGiverMetricSubViewSeed = [
+  "giver_metric_broadcast",
+  "giver_metric_fill_rate",
+  "giver_metric_avg_match",
+  "giver_metric_escrow_locked",
+  "giver_metric_dispute",
+  "giver_metric_escrow_released",
+] as const;

@@ -50,7 +50,7 @@ export type ChatTrustSignal = {
 
 export type ChatAttachment = {
   id: string;
-  type: "Before Photo" | "After Photo" | "Brief File" | "Delivery Proof";
+  type: "Before Photo" | "After Photo" | "Brief File" | "Delivery Proof" | "Location Pin";
   title: string;
   detail: string;
   status: "Uploaded" | "Pending" | "Reviewed";
@@ -197,6 +197,10 @@ export function resolveChatMessageBubbleClass(
 
 export function isChatPhotoAttachment(type: ChatAttachment["type"]): boolean {
   return type === "Before Photo" || type === "After Photo";
+}
+
+export function isChatLocationAttachment(type: ChatAttachment["type"]): boolean {
+  return type === "Location Pin";
 }
 
 export function resolveChatDelayRisk(thread: ChatThread): string {

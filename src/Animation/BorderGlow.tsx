@@ -19,6 +19,7 @@ interface BorderGlowProps {
   animated?: boolean;
   colors?: string[];
   fillOpacity?: number;
+  onClick?: () => void;
 }
 
 function parseHSL(hslStr: string): { h: number; s: number; l: number } {
@@ -122,6 +123,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
   animated = false,
   colors = ["#c084fc", "#f472b6", "#38bdf8"],
   fillOpacity = 0.5,
+  onClick,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -238,6 +240,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
       onPointerMove={handlePointerMove}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
+      onClick={onClick}
       className={`relative grid isolate border border-white/15 ${className}`}
       style={{
         background: backgroundColor,

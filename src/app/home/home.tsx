@@ -313,8 +313,6 @@ function HomeComponent() {
           hideDefaultCursor={true}
         />
       )}
-
-      
     </div>
   );
 }

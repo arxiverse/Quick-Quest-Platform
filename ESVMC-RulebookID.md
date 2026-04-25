@@ -204,7 +204,8 @@ Catatan:
 ## 13) Aliran Data ESVMC
 
 Semua yang menggunakan struktur ESVMC, aliran data seperti teks <p/>, <h1/>, akan tersimpan di ComponentName.service.ts selama
-datanya berupa teks untuk keperluan tampilan UI baik itu datanya berupa data Dummy ataupun yang telah terkoneksi dengan API sekalipun. Ianya tidak diletakkan di .tsx ataupun .ts karena ketika direplace, data tersebut langsung diteruskan ke .ts kemudian diteruskan lagi ke .tsx. Alih alih data dummy ditampilkan di UI .tsx lebih baik itu ditaruh langsung di service.ts supaya terlihat mudah. Jadi komponen .tsx langsung mengarahkan tali ke .ts dan mengarahkan lagi tali .ts ke service.ts. Ini dipisah 2: Statis Permanen atau Dinamis Jangka Panjang, 
+datanya berupa teks untuk keperluan tampilan UI baik itu datanya berupa data Dummy ataupun yang telah terkoneksi dengan API sekalipun. Ianya tidak diletakkan di .tsx ataupun .ts karena ketika direplace, data tersebut langsung diteruskan ke .ts kemudian diteruskan lagi ke .tsx. Alih alih data dummy ditampilkan di UI .tsx lebih baik itu ditaruh langsung di service.ts supaya terlihat mudah. Jadi komponen .tsx langsung mengarahkan tali ke .ts dan mengarahkan lagi tali .ts ke service.ts. Ini dipisah 2: Statis Permanen atau Dinamis Jangka Panjang,
+
 - Jika Dinamis Jangka panjang: Tingkat kemungkinan menaruh data di service.ts baik itu hanya tampilan saja adalah 46.55% tetapi mungkin agak ribet jika ingin menggantinya nanti karena harus mencarinya satu per satu di .tsx.
 - Jika Statis Permanen dan tidak lagi berubah maka hal itu diwajarkan dan opsional jika ditaruh di service.ts
 

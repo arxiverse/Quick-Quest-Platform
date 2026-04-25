@@ -1,0 +1,167 @@
+**P2P Marketplace | Escrow Security | Real-time Matching | PP System**
+_Neiraverse (NVRS) Confidential-Internal Use Only_
+
+Dokumen ini memuat Flow lengkap Quest Giver, Quest Runner, Escrow FSM, dan Dispute Mechanism sebagai referensi perancangan diagram dan implementasi sistem QQM.
+
+## 0. Definisi Inti
+
+Quick Quest Model (QQM) mengubah interaksi informal "tolong dong" menjadi ekosistem digital person-to-person yang scalable, aman, dan meritokratis lewat real-time matching, escrow security, dan trust berbasis algoritma (reputasi + Performance Point / PP).
+
+## 1. Inversi Model Bisnis
+
+Model bisnis konvensional menempatkan perusahaan sebagai penerima bayaran dari pelanggan. QQM membalik arah ini secara total:
+
+| Model Konvensional         | Model QQM                              |
+| :------------------------- | :------------------------------------- |
+| Perusahaan cari pelanggan  | Pelanggan menggaji pelanggan           |
+| Pelanggan bayar perusahaan | Platform hanya fasilitator kepercayaan |
+| Perusahaan untung          | Platform ambil fee % dari transaksi    |
+
+**Hasilnya:** uang berputar horizontal (ekonomi mikro jalan), perusahaan tetap revenue, impact sosial naik.
+
+## 2. Role Pengguna
+
+| Role             | Deskripsi                                                                 | Aksi Utama                                          |
+| :--------------- | :------------------------------------------------------------------------ | :-------------------------------------------------- |
+| **Quest Giver**  | Individu yang membutuhkan bantuan dan memposting pekerjaan di platform.   | Post quest, Lock escrow, Audit hasil, Release dana. |
+| **Quest Runner** | Individu yang menerima dan mengerjakan quest dari Giver sesuai skill-nya. | Lihat quest, Ambil quest, Kerjakan, Klaim selesai.  |
+
+## 3. Flow Quest Giver
+
+- **Step 1: Buka Aplikasi**. Giver membuka app dan masuk ke dashboard utama.
+- **Step 2: Post Quest**. Giver mengisi form detail quest:
+  - Deskripsi pekerjaan
+  - Skill tag / kategori
+  - Estimasi upah (Min / Max)
+  - Tipe quest: Solo atau Kelompok
+  - Lokasi (otomatis via GPS atau manual)
+- **Step 3: Lock Dana ke Escrow**. WAJIB sebelum quest di-broadcast. Sistem meminta Giver men-deposit dana ke escrow.
+  - Jika dana belum masuk, quest TIDAK dapat diposting.
+  - Tujuan: Runner terjamin, Giver tidak bisa melarikan diri setelah pekerjaan selesai.
+- **Step 4: Sistem Broadcast Quest**. Quest otomatis di-broadcast ke Runner terdekat.
+  - Radius awal: 1 km durasi 15 menit.
+  - Jika belum match: radius naik tiap 5 menit (1 km → 2 km → dst).
+- **Step 5: Notifikasi Match**. Sistem memberi notifikasi ke Giver bahwa Runner ditemukan. Giver dapat Accept atau Reject kandidat.
+- **Step 6: Giver Share Lokasi Detail**. Giver mengirimkan pin lokasi kerja kepada Runner melalui in-app chat. (Bukan Runner yang bertanya - Giver yang menginisiasi pengiriman lokasi).
+- **Step 7: Giver Tunggu & Siap Audit**. Runner tiba di lokasi, Giver memberikan instruksi pekerjaan.
+  - Sistem mencatat timestamp 'Mulai Kerja'.
+  - Giver menunggu hingga Runner menekan tombol 'Selesai Kerja'.
+- **Step 8: Audit Hasil Pekerjaan**. Giver menerima notifikasi 'Selesai Kerja' dari Runner. Giver melakukan audit fisik terhadap hasil pekerjaan. Tiga kemungkinan keputusan:
+  - Terima: dana escrow otomatis cair ke Runner.
+  - Tunda: Runner diberi waktu revisi (misal 30 menit).
+  - Dispute: masuk ke mekanisme penyelesaian sengketa.
+- **Step 9: Beri Rating ke Runner**. Setelah transaksi selesai, Giver memberikan rating ke Runner. Rating memperbarui Performance Point (PP) Runner secara otomatis.
+
+## 4. Flow Quest Runner
+
+- **Step 1: Buka Dashboard**. Runner membuka app dan masuk ke dashboard. Sistem menampilkan list quest yang di-broadcast sesuai skill tag dan lokasi Runner.
+- **Step 2: Filter & Pilih Quest**. Runner melihat detail quest: deskripsi, upah, lokasi, skill yang dibutuhkan. Runner menekan tombol 'Ambil Quest'.
+- **Step 3: Sistem Lock Quest**.
+  - Tipe Solo: quest langsung terkunci untuk Runner ini. Runner lain tidak dapat mengambil quest yang sama.
+  - Tipe Kelompok: Runner masuk ke antrian kelompok hingga kuota terpenuhi.
+- **Step 4: Terima Lokasi dari Giver**. Runner menerima pin lokasi kerja yang dikirimkan oleh Giver melalui in-app chat. (Runner tidak perlu bertanya - Giver yang menginisiasi).
+- **Step 5: Runner Meluncur ke Lokasi**. Runner berangkat menuju lokasi kerja yang telah diberikan oleh Giver.
+- **Step 6: Tiba di Lokasi & Mulai Kerja**. Runner tiba di lokasi, Giver memberikan instruksi pekerjaan.
+  - Runner menekan tombol 'Mulai Kerja' di app.
+  - Sistem mencatat timestamp dimulainya pekerjaan.
+- **Step 7: Selesaikan Pekerjaan & Klaim Selesai**. Pekerjaan selesai, Runner menekan tombol 'Selesai Kerja'. Notifikasi otomatis terkirim ke Giver untuk melakukan audit.
+- **Step 8: Tunggu Hasil Audit & Terima Pembayaran**. Runner menunggu keputusan audit dari Giver.
+  - Giver menekan 'Terima': dana escrow cair otomatis ke Runner.
+  - Giver menekan 'Tunda': Runner mendapat waktu revisi.
+  - Dispute: masuk ke mekanisme penyelesaian sengketa.
+  - Auto-release: Jika Giver tidak audit dalam X jam setelah klaim selesai, dana otomatis cair ke Runner (anti ghosting).
+- **Step 9: Beri Rating ke Giver**. Setelah transaksi selesai, Runner memberikan rating ke Giver. Rating memperbarui reputasi Giver dan memengaruhi visibilitas quest berikutnya.
+
+## 5. Titik Temu Giver → Runner
+
+Kedua flow berjalan paralel dan bertemu di titik-titik kritis berikut:
+
+| Titik Temu      | Giver                             | Runner                               |
+| :-------------- | :-------------------------------- | :----------------------------------- |
+| **Matching**    | Konfirmasi accept/reject kandidat | Ambil quest sistem lock              |
+| **Lokasi**      | Kirim pin lokasi kerja via in-app | Terima pin lokasi dari Giver         |
+| **Mulai Kerja** | Berikan instruksi pekerjaan       | Tekan 'Mulai Kerja' (timestamp)      |
+| **Selesai**     | Audit fisik hasil pekerjaan       | Tekan 'Selesai Kerja' notif ke Giver |
+| **Pembayaran**  | Tekan 'Terima' dana cair          | Terima dana dari escrow              |
+| **Rating**      | Beri rating ke Runner             | Beri rating ke Giver                 |
+
+## 6. Escrow State Machine (FSM)
+
+Dana Giver melewati serangkaian state yang terdefinisi ketat. Perpindahan state hanya terjadi atas trigger yang valid dari sistem.
+
+| State           | Keterangan                                            |
+| :-------------- | :---------------------------------------------------- |
+| **UNPAID**      | Dana belum di-deposit oleh Giver.                     |
+| **LOCKED**      | Dana di-deposit & dikunci. Quest siap di-broadcast.   |
+| **IN PROGRESS** | Quest sedang dikerjakan oleh Runner.                  |
+| **PENDING**     | Runner menekan 'Selesai Kerja'. Menunggu audit Giver. |
+| **RELEASED**    | Dana cair ke Runner. Transaksi selesai.               |
+| **DISPUTED**    | Sengketa aktif. Dana ditahan hingga mediasi selesai.  |
+
+**Trigger Perpindahan State:**
+
+| Dari            | Ke                    | Trigger                                                        |
+| :-------------- | :-------------------- | :------------------------------------------------------------- |
+| **UNPAID**      | **LOCKED**            | Giver berhasil men-deposit dana ke escrow                      |
+| **LOCKED**      | **IN_PROGRESS**       | Runner menekan 'Mulai Kerja'                                   |
+| **IN_PROGRESS** | **PENDING**           | Runner menekan 'Selesai Kerja'                                 |
+| **PENDING**     | **RELEASED**          | Giver menekan 'Terima' ATAU auto-release setelah timeout X jam |
+| **PENDING**     | **DISPUTED**          | Salah satu pihak menekan 'Dispute'                             |
+| **DISPUTED**    | **RELEASED / REFUND** | Keputusan mediasi platform (tim QQ)                            |
+
+## 7. Dispute Mechanism
+
+Dispute terjadi ketika Giver dan Runner tidak sepakat atas hasil pekerjaan. Sistem menyelesaikannya melalui 3 layer secara berurutan:
+
+- **Layer 1: Auto Timer**. Jika Giver tidak melakukan audit dalam X jam setelah Runner menekan 'Selesai Kerja', sistem secara otomatis me-release dana ke Runner. Tujuan: mencegah Giver ghosting Runner yang sudah bekerja dengan benar.
+- **Layer 2: Evidence Based**. Jika terjadi dispute, kedua pihak dapat mengupload bukti (foto / video pekerjaan). Sistem memberi waktu 24 jam untuk submit bukti dari masing-masing pihak. Bukti yang disubmit menjadi dasar keputusan mediator.
+- **Layer 3: Platform Mediasi**. Tim QQ mereview bukti dari kedua pihak dan memberikan keputusan final. Pihak yang terbukti benar, dana dilepaskan sesuai keputusan. Pihak yang terbukti salah, PP turun + peringatan (warning). Repeat offender, akun di-suspend.
+
+## 8. Matching & Broadcast Logic
+
+| Fase               | Durasi             | Radius          | Kondisi Lanjut                                           |
+| :----------------- | :----------------- | :-------------- | :------------------------------------------------------- |
+| **Broadcast Awal** | 0-15 menit         | 1 km            | Belum match → fase 2                                     |
+| **Ekspansi 1**     | +5 menit           | 2 km            | Belum match → ekspansi lanjut                            |
+| **Ekspansi N**     | +5 menit tiap fase | +1 km tiap fase | Lanjut hingga match ditemukan                            |
+| **Match Solo**     | -                  | -               | Quest dikunci. Broadcast dibekukan.                      |
+| **Match Kelompok** | -                  | -               | Sistem terus mengumpulkan Runner hingga kuota terpenuhi. |
+
+## 9. Performance Point (PP) System
+
+PP adalah skor kontribusi nyata yang menggantikan kompetisi kosong game menjadi kompetisi produktif.
+
+| Aspek            | Detail                                                                           |
+| :--------------- | :------------------------------------------------------------------------------- |
+| **Formula**      | $PP\_skill = \text{SUM}(Rating \times Difficulty \times Value) \times TimeDecay$ |
+| **Scope**        | Setiap skill/bidang memiliki PP tersendiri (non-universal)                       |
+| **Global Point** | Akumulasi total PP dari seluruh bidang yang dikerjakan                           |
+| **Leaderboard**  | Wilayah → Provinsi → Nasional → (Internasional)                                  |
+| **Efek**         | Rank naik, trust naik → quest lebih bernilai → income naik                       |
+
+## 10. Tech Stack (Referensi)
+
+| Layer            | Teknologi        | Fungsi                                          |
+| :--------------- | :--------------- | :---------------------------------------------- |
+| **Database**     | Supabase         | Primary DB + Auth source of truth               |
+| **Local Cache**  | ObjectBox        | Sync/local cache, offline tolerant              |
+| **Event Stream** | Apache Kafka     | Event streaming + audit trail                   |
+| **API**          | Drogon (C++)     | High-performance web framework                  |
+| **Security**     | Cloudflare       | WAF, DDoS protection, rate limit, edge security |
+| **Geo / Maps**   | Maps API + H3/S2 | Spatial indexing untuk matching engine          |
+| **Payment**      | Payment Gateway  | Escrow controller + transaksi aman              |
+| **KYC**          | KYC Provider     | Verifikasi identitas pengguna (anti Sybil)      |
+
+## 11. Roadmap Teknis
+
+| Phase       | Nama          | Scope                                                                       |
+| :---------- | :------------ | :-------------------------------------------------------------------------- |
+| **Phase 1** | **MVP**       | **CRUD quest, payment basic, proximity matching sederhana**                 |
+| **Phase 2** | **Stability** | **Optimasi matching engine, reputasi kompleks (weighted PP)**               |
+| **Phase 3** | **Scale**     | **Dispute automation, multi-runner quest, verified CV/portfolio generator** |
+
+---
+
+_Quick Quest Model (QQM) Flow Document - Internal Reference | Neiraverse (NVRS) | Confidential - Not for Distribution_
+
+---

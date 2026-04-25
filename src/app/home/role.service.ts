@@ -2,11 +2,13 @@
 // Tugas: HANYA menyediakan jalur ke backend via global.service.ts.
 // Tidak ada logika bisnis di sini. Logika ada di role.ts.
 
-import GlobalEndpoint, { requestJson } from "../global.service";
+import GlobalEndpoint, { ApiRequestError, requestJson } from "../global.service";
 import type { BackendUserRole } from "./role.util";
 
 export type RoleInitPayload = {
+  id?: string;
   user_role: BackendUserRole;
+  authorization: string;
   fullname: string;
   email: string;
   phone: string;
@@ -27,7 +29,7 @@ export async function fetchRoleInitData(): Promise<RoleInitPayload> {
   });
 
   if (!response.success || !response.data) {
-    throw new Error(response.message || "Data role tidak valid dari backend.");
+    throw new ApiRequestError(response.message || "Data role tidak valid dari backend.", 500);
   }
 
   return response.data;

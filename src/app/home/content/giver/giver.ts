@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   GIVER_SUBVIEW_STORAGE_KEY,
   giverBriefChecklistItems,
@@ -11,6 +12,10 @@ import {
   giverPostQuestInsights,
   giverViewCopySeed,
   type GiverViewCopy,
+  QQM_SKILL_TAGS,
+  QQM_PLATFORM_FEE_PERCENT,
+  type EditorQuestType,
+  type EditorStep,
 } from "./giver.service";
 
 export type GiverKpiCard = {
@@ -273,3 +278,73 @@ export {
   giverKpiCards,
   giverPostQuestInsights,
 };
+
+export function formatRupiah(val: string): string {
+  const digits = val.replace(/\D/g, "");
+  if (!digits) return "";
+  return parseInt(digits, 10).toLocaleString("id-ID");
+}
+
+export function parseRupiah(val: string): number {
+  return parseInt(val.replace(/\./g, "").replace(/,/g, ""), 10) || 0;
+}
+
+export function useQuestEditorVM() {
+  const [step, setStep] = useState<EditorStep>(1);
+  const [questType, setQuestType] = useState<EditorQuestType>("SOLO");
+  const [slotCount, setSlotCount] = useState(1);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [upahMin, setUpahMin] = useState("");
+  const [upahMax, setUpahMax] = useState("");
+  const [baseRadius, setBaseRadius] = useState(1);
+  const [escrowLocked, setEscrowLocked] = useState(false);
+
+  const upahMinNum = parseRupiah(upahMin);
+  const upahMaxNum = parseRupiah(upahMax);
+  const totalEscrowMin = upahMinNum * (questType === "KELOMPOK" ? slotCount : 1);
+  const totalEscrowMax = upahMaxNum * (questType === "KELOMPOK" ? slotCount : 1);
+  const platformFeeMin = Math.round(totalEscrowMin * (QQM_PLATFORM_FEE_PERCENT / 100));
+  const platformFeeMax = Math.round(totalEscrowMax * (QQM_PLATFORM_FEE_PERCENT / 100));
+  const totalDepositMax = totalEscrowMax + platformFeeMax;
+
+  function toggleSkill(skill: string) {
+    setSelectedSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
+    );
+  }
+
+  const canProceedStep1 = selectedSkills.length > 0 && upahMin !== "" && upahMax !== "" && upahMaxNum >= upahMinNum;
+  const canProceedStep2 = true;
+  const canBroadcast = escrowLocked;
+
+  return {
+    step,
+    setStep,
+    questType,
+    setQuestType,
+    slotCount,
+    setSlotCount,
+    selectedSkills,
+    toggleSkill,
+    upahMin,
+    setUpahMin,
+    upahMax,
+    setUpahMax,
+    baseRadius,
+    setBaseRadius,
+    escrowLocked,
+    setEscrowLocked,
+    upahMinNum,
+    upahMaxNum,
+    totalEscrowMin,
+    totalEscrowMax,
+    platformFeeMin,
+    platformFeeMax,
+    totalDepositMax,
+    canProceedStep1,
+    canProceedStep2,
+    canBroadcast,
+    skillTags: QQM_SKILL_TAGS,
+    platformFeePercent: QQM_PLATFORM_FEE_PERCENT,
+  };
+}

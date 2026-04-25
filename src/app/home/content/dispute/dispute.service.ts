@@ -143,6 +143,7 @@ export const disputeStatusMeta: Record<
   UNDER_REVIEW:         { label: "Dalam Review",        color: "text-[#6D28D9]",  bg: "bg-[#E9D5FF]" },
   RESOLVED_RUNNER:      { label: "Selesai — Runner Menang", color: "text-[#166534]", bg: "bg-[#DCFCE7]" },
   RESOLVED_GIVER:       { label: "Selesai — Giver Menang",  color: "text-[#166534]", bg: "bg-[#DCFCE7]" },
+  RESOLVED_PARTIAL:     { label: "Selesai — Win-Win (50:50)", color: "text-[#166534]", bg: "bg-[#DCFCE7]" },
   DISMISSED:            { label: "Ditolak",             color: "text-[#991B1B]",  bg: "bg-[#FEE2E2]" },
 };
 
@@ -182,6 +183,10 @@ export const disputeItems: DisputeItem[] = [
         uploadedAt: "14 Apr 2026, 11:00",
       },
     ],
+    timeline: [
+      { status: "AUTO_TIMER", time: "14 Apr 2026, 09:30", description: "Dispute dinaikkan oleh Giver. Pembekuan Escrow Rp 120.000." },
+      { status: "EVIDENCE_SUBMISSION", time: "-", description: "Menunggu submit bukti foto/keterangan dari kedua belah pihak." }
+    ]
   },
   {
     id: "DSP-002",
@@ -211,6 +216,11 @@ export const disputeItems: DisputeItem[] = [
       },
     ],
     mediatorNote: "Bukti Runner lebih kuat. Sedang dalam finalisasi keputusan.",
+    timeline: [
+      { status: "AUTO_TIMER", time: "12 Apr 2026, 14:00", description: "Dispute dinaikkan oleh Runner. Menunggu audit." },
+      { status: "EVIDENCE_SUBMISSION", time: "12 Apr 2026, 15:35", description: "Runner melampirkan 2 bukti operasional." },
+      { status: "UNDER_REVIEW", time: "13 Apr 2026, 09:00", description: "Sistem meninjau kelengkapan bukti." }
+    ]
   },
   {
     id: "DSP-003",
@@ -234,6 +244,37 @@ export const disputeItems: DisputeItem[] = [
     ],
     mediatorNote: "Runner terbukti telah mengantar dokumen. Dana di-release penuh.",
     resolvedAt: "11 Apr 2026, 12:00",
+    timeline: [
+      { status: "AUTO_TIMER", time: "10 Apr 2026, 08:00", description: "Dispute dinaikkan. Refund request." },
+      { status: "EVIDENCE_SUBMISSION", time: "10 Apr 2026, 10:45", description: "Runner memberikan bukti." },
+      { status: "UNDER_REVIEW", time: "10 Apr 2026, 15:00", description: "Mediator melakukan audit notaris." },
+      { status: "RESOLVED_RUNNER", time: "11 Apr 2026, 12:00", description: "Sengketa dimenangkan oleh Runner." }
+    ]
+  },
+  {
+    id: "DSP-004",
+    questId: "QST-7555",
+    questTitle: "Edit Video Iklan 1 Menit",
+    amount: "Rp 500.000",
+    raisedBy: "GIVER",
+    raisedAt: "08 Apr 2026, 10:00",
+    status: "RESOLVED_PARTIAL",
+    autoReleaseHoursLeft: 0,
+    evidenceDeadline: "09 Apr 2026, 10:00",
+    giverEvidence: [
+      { id: "EV-030", uploader: "GIVER", type: "NOTE", label: "Revisi tidak dikerjakan sesuai brief, tapi durasi terpenuhi.", uploadedAt: "08 Apr 2026, 10:15" },
+    ],
+    runnerEvidence: [
+      { id: "EV-031", uploader: "RUNNER", type: "PHOTO", label: "Screenshot folder project telah selesai.", uploadedAt: "08 Apr 2026, 11:00" }
+    ],
+    mediatorNote: "Kualitas hasil tidak memenuhi 100% brief namun runner telah mengalokasikan waktu dan resource. Refund 50:50 diputuskan untuk keadilan bersama.",
+    resolvedAt: "10 Apr 2026, 15:30",
+    timeline: [
+      { status: "AUTO_TIMER", time: "08 Apr 2026, 10:00", description: "Giver menahan escrow karena revisi belum selesai." },
+      { status: "EVIDENCE_SUBMISSION", time: "08 Apr 2026, 11:00", description: "Kedua belah pihak merilis bukti awal." },
+      { status: "UNDER_REVIEW", time: "09 Apr 2026, 09:00", description: "Mediator turun tangan membandingkan hasil render." },
+      { status: "RESOLVED_PARTIAL", time: "10 Apr 2026, 15:30", description: "Resolusi Win-Win: Escrow dipotong 50:50." }
+    ]
   },
 ];
 
@@ -305,6 +346,10 @@ export const disputeGiverItems: DisputeItem[] = [
       },
     ],
     runnerEvidence: [],
+    timeline: [
+      { status: "AUTO_TIMER", time: "15 Apr 2026, 14:20", description: "Laporkan masalah: Kualitas responden rendah." },
+      { status: "EVIDENCE_SUBMISSION", time: "-", description: "Menunggu Runner melengkapi pembelaan/bukti." }
+    ]
   },
   {
     id: "GDSP-002",
@@ -335,6 +380,11 @@ export const disputeGiverItems: DisputeItem[] = [
       },
     ],
     mediatorNote: "Bukti CCTV dan alasan P3K sedang dievaluasi bersama panitia pameran.",
+    timeline: [
+      { status: "AUTO_TIMER", time: "12 Apr 2026, 18:00", description: "Laporan dibangkitkan. Escrow terkunci." },
+      { status: "EVIDENCE_SUBMISSION", time: "13 Apr 2026, 09:10", description: "Kedua pihak telah memberikan bukti kuat." },
+      { status: "UNDER_REVIEW", time: "13 Apr 2026, 14:00", description: "Sedang dikomunikasikan dengan penyelenggara." }
+    ]
   },
 ];
 

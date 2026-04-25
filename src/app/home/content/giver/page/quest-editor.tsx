@@ -1,64 +1,42 @@
-import { useState } from "react";
 import { ArrowLeftIcon } from "../../../home.icons";
 import { cn, Surface } from "../../../home.ui";
-
-const SKILL_TAGS = [
-  "Kebersihan & Rumah Tangga",
-  "Event & Hiburan",
-  "Logistik & Pengiriman",
-  "Teknologi & IT",
-  "Desain & Kreatif",
-  "Pengetikan & Admin",
-  "Pendidikan & Tutor",
-  "Pertanian & Lingkungan",
-  "Kuliner & Katering",
-  "Keamanan & Pengawasan",
-  "Kesehatan & Perawatan",
-  "Keuangan & Akuntansi",
-];
-
-type QuestType = "SOLO" | "KELOMPOK";
-type EditorStep = 1 | 2 | 3;
-
-const PLATFORM_FEE_PERCENT = 5;
-
-function formatRupiah(val: string): string {
-  const digits = val.replace(/\D/g, "");
-  if (!digits) return "";
-  return parseInt(digits, 10).toLocaleString("id-ID");
-}
-
-function parseRupiah(val: string): number {
-  return parseInt(val.replace(/\./g, "").replace(/,/g, ""), 10) || 0;
-}
+import FadeContent from "../../../../../Animation/Fade";
+import { useQuestEditorVM, formatRupiah } from "../giver";
+import type {
+  EditorQuestType as QuestType,
+  EditorStep,
+} from "../giver.service";
 
 export function QuestEditor({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState<EditorStep>(1);
-  const [questType, setQuestType] = useState<QuestType>("SOLO");
-  const [slotCount, setSlotCount] = useState(1);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [upahMin, setUpahMin] = useState("");
-  const [upahMax, setUpahMax] = useState("");
-  const [baseRadius, setBaseRadius] = useState(1);
-  const [escrowLocked, setEscrowLocked] = useState(false);
-
-  const upahMinNum = parseRupiah(upahMin);
-  const upahMaxNum = parseRupiah(upahMax);
-  const totalEscrowMin = upahMinNum * (questType === "KELOMPOK" ? slotCount : 1);
-  const totalEscrowMax = upahMaxNum * (questType === "KELOMPOK" ? slotCount : 1);
-  const platformFeeMin = Math.round(totalEscrowMin * (PLATFORM_FEE_PERCENT / 100));
-  const platformFeeMax = Math.round(totalEscrowMax * (PLATFORM_FEE_PERCENT / 100));
-  const totalDepositMax = totalEscrowMax + platformFeeMax;
-
-  function toggleSkill(skill: string) {
-    setSelectedSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
-    );
-  }
-
-  const canProceedStep1 = selectedSkills.length > 0 && upahMin && upahMax && upahMaxNum >= upahMinNum;
-  const canProceedStep2 = true;
-  const canBroadcast = escrowLocked;
+  const {
+    step,
+    setStep,
+    questType,
+    setQuestType,
+    slotCount,
+    setSlotCount,
+    selectedSkills,
+    toggleSkill,
+    upahMin,
+    setUpahMin,
+    upahMax,
+    setUpahMax,
+    baseRadius,
+    setBaseRadius,
+    escrowLocked,
+    setEscrowLocked,
+    upahMinNum,
+    upahMaxNum,
+    totalEscrowMin,
+    totalEscrowMax,
+    platformFeeMin,
+    platformFeeMax,
+    totalDepositMax,
+    canProceedStep1,
+    canProceedStep2,
+    canBroadcast,
+    skillTags: SKILL_TAGS,
+  } = useQuestEditorVM();
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -134,7 +112,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
           <div className="mt-6 grid gap-6 md:grid-cols-2 relative z-10">
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-base-content/70">Judul Quest</label>
+                <label className="text-xs font-bold text-base-content/70">
+                  Judul Quest
+                </label>
                 <input
                   type="text"
                   className="input input-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100"
@@ -143,7 +123,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-base-content/70">Deskripsi Pekerjaan</label>
+                <label className="text-xs font-bold text-base-content/70">
+                  Deskripsi Pekerjaan
+                </label>
                 <textarea
                   className="textarea textarea-bordered w-full mt-1.5 h-28 focus:border-[#38BDF8] bg-base-100"
                   placeholder="Jelaskan secara rinci tugas runner, alat yang diperlukan, dan kondisi lapangan..."
@@ -152,7 +134,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-base-content/70">Mode</label>
+                  <label className="text-xs font-bold text-base-content/70">
+                    Mode
+                  </label>
                   <select className="select select-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100">
                     <option>Fisik (On-Site)</option>
                     <option>Digital (Remote)</option>
@@ -160,7 +144,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-base-content/70">Kategori</label>
+                  <label className="text-xs font-bold text-base-content/70">
+                    Kategori
+                  </label>
                   <select className="select select-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100">
                     <option>Event Organizer</option>
                     <option>Gudang & Logistik</option>
@@ -178,7 +164,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   <span className="text-error text-[10px]">*Wajib</span>
                 </label>
                 <p className="text-[10px] text-base-content/50 mt-0.5 mb-2">
-                  Sistem matching Runner berdasarkan skill tag ini. Pilih minimal 1.
+                  Sistem matching Runner berdasarkan skill tag ini. Pilih
+                  minimal 1.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {SKILL_TAGS.map((skill) => (
@@ -208,7 +195,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
             {/* Upah Min/Max */}
             <div className="space-y-4 rounded-[12px] border border-base-300/70 bg-base-100 p-4 shadow-sm">
               <div>
-                <p className="text-xs font-bold text-base-content/70">Tipe Quest</p>
+                <p className="text-xs font-bold text-base-content/70">
+                  Tipe Quest
+                </p>
                 <p className="text-[10px] text-base-content/50 mb-2 mt-0.5">
                   Pilih Solo untuk 1 Runner, Kelompok untuk tim.
                 </p>
@@ -242,7 +231,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                     max={20}
                     className="input input-bordered w-full mt-1.5 focus:border-[#38BDF8] bg-base-100"
                     value={slotCount}
-                    onChange={(e) => setSlotCount(Math.max(2, parseInt(e.target.value) || 2))}
+                    onChange={(e) =>
+                      setSlotCount(Math.max(2, parseInt(e.target.value) || 2))
+                    }
                   />
                 </div>
               )}
@@ -256,7 +247,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 </p>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-sm font-bold text-base-content/50">Rp</span>
+                    <span className="text-sm font-bold text-base-content/50">
+                      Rp
+                    </span>
                   </div>
                   <input
                     type="text"
@@ -277,7 +270,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 </p>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-sm font-bold text-base-content/50">Rp</span>
+                    <span className="text-sm font-bold text-base-content/50">
+                      Rp
+                    </span>
                   </div>
                   <input
                     type="text"
@@ -314,7 +309,7 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   type="button"
                   disabled={!canProceedStep1}
                   onClick={() => setStep(2)}
-                  className="btn h-12 w-full rounded-[10px] border-none bg-gradient-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="btn h-12 w-full rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Lanjut ke Konfigurasi →
                 </button>
@@ -337,7 +332,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   Radius Awal Broadcast (km)
                 </label>
                 <p className="text-[10px] text-base-content/50 mt-0.5">
-                  Sistem akan expand otomatis +1km setiap 5 menit jika belum match.
+                  Sistem akan expand otomatis +1km setiap 5 menit jika belum
+                  match.
                 </p>
                 <div className="mt-3">
                   <input
@@ -351,14 +347,18 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   />
                   <div className="flex justify-between text-[10px] font-bold mt-1 text-base-content/50">
                     <span>1 KM</span>
-                    <span className="text-[#38BDF8] font-bold">{baseRadius} KM terpilih</span>
+                    <span className="text-[#38BDF8] font-bold">
+                      {baseRadius} KM terpilih
+                    </span>
                     <span>10 KM</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-base-content/70">Lokasi Quest</label>
+                <label className="text-xs font-bold text-base-content/70">
+                  Lokasi Quest
+                </label>
                 <p className="text-[10px] text-base-content/50 mt-0.5 mb-2">
                   GPS otomatis atau isi manual jika berbeda.
                 </p>
@@ -371,7 +371,7 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   />
                   <button
                     type="button"
-                    className="btn h-[2.875rem] min-h-[2.875rem] rounded-[10px] border-none bg-[#38BDF8]/20 px-3 text-[#38BDF8] hover:bg-[#38BDF8]/30"
+                    className="btn h-11.5 min-h-11.5 rounded-[10px] border-none bg-[#38BDF8]/20 px-3 text-[#38BDF8] hover:bg-[#38BDF8]/30"
                   >
                     📍
                   </button>
@@ -384,16 +384,41 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 </p>
                 <div className="mt-2 space-y-1.5">
                   {[
-                    { fase: "Broadcast Awal", dur: "0–15 menit", rad: `${baseRadius} km` },
-                    { fase: "Ekspansi 1", dur: "+5 menit", rad: `${baseRadius + 1} km` },
-                    { fase: "Ekspansi 2", dur: "+5 menit", rad: `${baseRadius + 2} km` },
-                    { fase: "Ekspansi N", dur: "+5 mnt/fase", rad: "+1 km/fase" },
+                    {
+                      fase: "Broadcast Awal",
+                      dur: "0–15 menit",
+                      rad: `${baseRadius} km`,
+                    },
+                    {
+                      fase: "Ekspansi 1",
+                      dur: "+5 menit",
+                      rad: `${baseRadius + 1} km`,
+                    },
+                    {
+                      fase: "Ekspansi 2",
+                      dur: "+5 menit",
+                      rad: `${baseRadius + 2} km`,
+                    },
+                    {
+                      fase: "Ekspansi N",
+                      dur: "+5 mnt/fase",
+                      rad: "+1 km/fase",
+                    },
                   ].map((row) => (
-                    <div key={row.fase} className="flex items-center justify-between text-xs">
-                      <span className="text-base-content/70 font-medium">{row.fase}</span>
+                    <div
+                      key={row.fase}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <span className="text-base-content/70 font-medium">
+                        {row.fase}
+                      </span>
                       <div className="flex gap-2">
-                        <span className="rounded bg-base-200 px-1.5 py-0.5 font-semibold text-base-content/80 text-[10px]">{row.dur}</span>
-                        <span className="rounded bg-[#DBEAFE] px-1.5 py-0.5 font-bold text-[#1D4ED8] text-[10px]">{row.rad}</span>
+                        <span className="rounded bg-base-200 px-1.5 py-0.5 font-semibold text-base-content/80 text-[10px]">
+                          {row.dur}
+                        </span>
+                        <span className="rounded bg-[#DBEAFE] px-1.5 py-0.5 font-bold text-[#1D4ED8] text-[10px]">
+                          {row.rad}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -403,29 +428,39 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
 
             <div className="space-y-4 rounded-[12px] border border-base-300/70 bg-base-100 p-4 shadow-sm">
               <div>
-                <p className="text-xs font-bold text-base-content/70">Ringkasan Quest</p>
+                <p className="text-xs font-bold text-base-content/70">
+                  Ringkasan Quest
+                </p>
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-base-content/65">Tipe</span>
                     <span className="font-bold text-base-content">
-                      {questType === "SOLO" ? "Per-Individu" : `Ber-Kelompok (${slotCount} orang)`}
+                      {questType === "SOLO"
+                        ? "Per-Individu"
+                        : `Ber-Kelompok (${slotCount} orang)`}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-base-content/65">Skill Tags</span>
                     <span className="font-bold text-base-content">
-                      {selectedSkills.length > 0 ? `${selectedSkills.length} dipilih` : "—"}
+                      {selectedSkills.length > 0
+                        ? `${selectedSkills.length} dipilih`
+                        : "—"}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-base-content/65">Rentang Upah</span>
                     <span className="font-bold text-[#10B981]">
-                      {upahMin && upahMax ? `Rp ${upahMin} – Rp ${upahMax}` : "—"}
+                      {upahMin && upahMax
+                        ? `Rp ${upahMin} – Rp ${upahMax}`
+                        : "—"}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-base-content/65">Radius Awal</span>
-                    <span className="font-bold text-base-content">{baseRadius} km</span>
+                    <span className="font-bold text-base-content">
+                      {baseRadius} km
+                    </span>
                   </div>
                 </div>
               </div>
@@ -443,7 +478,7 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                     type="button"
                     disabled={!canProceedStep2}
                     onClick={() => setStep(3)}
-                    className="btn h-11 flex-1 rounded-[10px] border-none bg-gradient-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95"
+                    className="btn h-11 flex-1 rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95"
                   >
                     Lanjut Deposit →
                   </button>
@@ -462,8 +497,9 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   ⚠ Perhatian Penting
                 </p>
                 <p className="mt-1.5 text-sm text-[#7F1D1D] leading-relaxed">
-                  Quest <strong>tidak dapat dibroadcast</strong> sebelum dana escrow berhasil di-deposit.
-                  Dana Runner dijamin aman oleh sistem — Giver tidak bisa menarik dana setelah quest aktif.
+                  Quest <strong>tidak dapat dibroadcast</strong> sebelum dana
+                  escrow berhasil di-deposit. Dana Runner dijamin aman oleh
+                  sistem — Giver tidak bisa menarik dana setelah quest aktif.
                 </p>
               </div>
 
@@ -473,13 +509,17 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-base-content/65">Upah Runner (Min)</span>
+                    <span className="text-base-content/65">
+                      Upah Runner (Min)
+                    </span>
                     <span className="font-semibold">
                       Rp {totalEscrowMin.toLocaleString("id-ID")}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-base-content/65">Upah Runner (Max)</span>
+                    <span className="text-base-content/65">
+                      Upah Runner (Max)
+                    </span>
                     <span className="font-semibold">
                       Rp {totalEscrowMax.toLocaleString("id-ID")}
                     </span>
@@ -487,7 +527,8 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   <div className="flex justify-between text-[#F59E0B]">
                     <span className="font-medium">Platform Fee (5%)</span>
                     <span className="font-bold">
-                      Rp {platformFeeMin.toLocaleString("id-ID")} – Rp {platformFeeMax.toLocaleString("id-ID")}
+                      Rp {platformFeeMin.toLocaleString("id-ID")} – Rp{" "}
+                      {platformFeeMax.toLocaleString("id-ID")}
                     </span>
                   </div>
                   <div className="border-t border-base-200 pt-2 flex justify-between text-base font-bold text-base-content">
@@ -498,67 +539,104 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                   </div>
                 </div>
                 <p className="text-[10px] text-base-content/50">
-                  Dana di-hold di escrow. Cair ke Runner setelah Giver klik "Terima" atau auto-release setelah 24 jam.
+                  Dana di-hold di escrow. Cair ke Runner setelah Giver klik
+                  "Terima" atau auto-release setelah 24 jam.
                 </p>
               </div>
 
               {/* Escrow State Visual */}
-              <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55 mb-3">
-                  Alur Escrow Setelah Deposit
-                </p>
-                <div className="flex items-center gap-1">
-                  {[
-                    { state: "UNPAID", color: "bg-base-300 text-base-content/50" },
-                    { state: "LOCKED", color: "bg-[#F59E0B] text-white" },
-                    { state: "IN_PROGRESS", color: "bg-[#3B82F6] text-white" },
-                    { state: "PENDING", color: "bg-[#EF4444] text-white" },
-                    { state: "RELEASED", color: "bg-[#10B981] text-white" },
-                  ].map((s, i) => (
-                    <div key={s.state} className="flex flex-1 items-center">
-                      <div
-                        className={cn(
-                          "flex-1 rounded-[6px] py-1 text-center text-[9px] font-bold tracking-wide",
-                          escrowLocked && i === 1
-                            ? "ring-2 ring-offset-1 ring-[#F59E0B]"
-                            : "",
-                          s.color,
+              <FadeContent blur={true} duration={1000} className="w-full">
+                <div className="rounded-[12px] border border-base-300/70 bg-base-100 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/55 mb-3">
+                    Alur Escrow Setelah Deposit
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {[
+                      {
+                        state: "UNPAID",
+                        color: "bg-base-300 text-base-content/50",
+                      },
+                      { state: "LOCKED", color: "bg-[#F59E0B] text-white" },
+                      {
+                        state: "IN_PROGRESS",
+                        color: "bg-[#3B82F6] text-white",
+                      },
+                      { state: "PENDING", color: "bg-[#EF4444] text-white" },
+                      { state: "RELEASED", color: "bg-[#10B981] text-white" },
+                    ].map((s, i) => (
+                      <div key={s.state} className="flex flex-1 items-center">
+                        <div
+                          className={cn(
+                            "flex-1 rounded-[6px] py-1 text-center text-[9px] font-bold tracking-wide transition-all",
+                            escrowLocked && i === 1
+                              ? "ring-2 ring-offset-1 ring-[#F59E0B] shadow-lg shadow-[#F59E0B]/30 scale-105"
+                              : "",
+                            s.color,
+                          )}
+                        >
+                          {s.state}
+                        </div>
+                        {i < 4 && (
+                          <div className="w-1.5 h-0.5 bg-base-300 shrink-0 transition-colors" />
                         )}
-                      >
-                        {s.state}
                       </div>
-                      {i < 4 && <div className="w-1.5 h-0.5 bg-base-300 flex-shrink-0" />}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] text-base-content/50">
+                    Status saat ini:{" "}
+                    <strong
+                      className={
+                        escrowLocked ? "text-[#F59E0B]" : "text-base-content/70"
+                      }
+                    >
+                      {escrowLocked
+                        ? "LOCKED — Siap Broadcast"
+                        : "UNPAID — Menunggu Deposit"}
+                    </strong>
+                  </p>
                 </div>
-                <p className="mt-2 text-[10px] text-base-content/50">
-                  Status saat ini:{" "}
-                  <strong className={escrowLocked ? "text-[#F59E0B]" : "text-base-content/70"}>
-                    {escrowLocked ? "LOCKED — Siap Broadcast" : "UNPAID — Menunggu Deposit"}
-                  </strong>
-                </p>
-              </div>
+              </FadeContent>
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-[12px] border border-[#A046FF]/30 bg-gradient-to-br from-[#A046FF]/5 to-transparent p-5">
+              <div className="rounded-[12px] border border-[#A046FF]/30 bg-linear-to-br from-[#A046FF]/5 to-transparent p-5">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#A046FF]">
                   Pilih Metode Pembayaran
                 </p>
                 <div className="mt-3 space-y-2">
                   {[
-                    { id: "va", label: "Virtual Account Bank", hint: "BCA, BNI, Mandiri, BRI" },
-                    { id: "qris", label: "QRIS", hint: "Bayar dengan semua e-wallet" },
-                    { id: "wallet", label: "QQ Wallet", hint: "Saldo tersedia: Rp 250.000" },
+                    {
+                      id: "va",
+                      label: "Virtual Account Bank",
+                      hint: "BCA, BNI, Mandiri, BRI",
+                    },
+                    {
+                      id: "qris",
+                      label: "QRIS",
+                      hint: "Bayar dengan semua e-wallet",
+                    },
+                    {
+                      id: "wallet",
+                      label: "QQ Wallet",
+                      hint: "Saldo tersedia: Rp 250.000",
+                    },
                   ].map((method) => (
                     <label
                       key={method.id}
                       className="flex items-center gap-3 rounded-[10px] border border-base-300/70 bg-base-100 p-3 cursor-pointer hover:border-[#A046FF]/40 transition-colors"
                     >
-                      <input type="radio" name="payment" className="radio radio-sm" />
+                      <input
+                        type="radio"
+                        name="payment"
+                        className="radio radio-sm"
+                      />
                       <div>
-                        <p className="text-sm font-semibold text-base-content">{method.label}</p>
-                        <p className="text-[11px] text-base-content/60">{method.hint}</p>
+                        <p className="text-sm font-semibold text-base-content">
+                          {method.label}
+                        </p>
+                        <p className="text-[11px] text-base-content/60">
+                          {method.hint}
+                        </p>
                       </div>
                     </label>
                   ))}
@@ -574,18 +652,22 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                     "btn h-12 w-full rounded-[10px] border-none font-bold shadow-lg text-sm transition-all active:scale-95",
                     escrowLocked
                       ? "bg-[#10B981] text-white shadow-[#10B981]/20 cursor-default"
-                      : "bg-gradient-to-r from-[#F59E0B] to-[#EF4444] text-white shadow-[#F59E0B]/30 hover:opacity-90",
+                      : "bg-linear-to-r from-[#F59E0B] to-[#EF4444] text-white shadow-[#F59E0B]/30 hover:opacity-90",
                   )}
                 >
-                  {escrowLocked ? "✓ Escrow Berhasil Di-lock!" : "💳 Deposit Escrow Sekarang"}
+                  {escrowLocked
+                    ? "✓ Escrow Berhasil Di-lock!"
+                    : "💳 Deposit Escrow Sekarang"}
                 </button>
 
                 <button
                   type="button"
                   disabled={!canBroadcast}
-                  className="btn h-12 w-full rounded-[10px] border-none bg-gradient-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="btn h-12 w-full rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {canBroadcast ? "🚀 Broadcast Quest Sekarang!" : "⏳ Menunggu Deposit Escrow..."}
+                  {canBroadcast
+                    ? "🚀 Broadcast Quest Sekarang!"
+                    : "⏳ Menunggu Deposit Escrow..."}
                 </button>
 
                 <button
@@ -599,9 +681,12 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
 
               {escrowLocked && (
                 <div className="rounded-[10px] bg-[#F0FDF4] border border-[#BBF7D0] p-3 animate-in fade-in duration-300">
-                  <p className="text-xs font-bold text-[#166534]">✓ Escrow Locked</p>
+                  <p className="text-xs font-bold text-[#166534]">
+                    ✓ Escrow Locked
+                  </p>
                   <p className="text-[11px] text-[#166534]/80 mt-0.5">
-                    Dana Runner telah diamankan. Quest siap di-broadcast ke Runner terdekat dalam radius {baseRadius} km.
+                    Dana Runner telah diamankan. Quest siap di-broadcast ke
+                    Runner terdekat dalam radius {baseRadius} km.
                   </p>
                 </div>
               )}

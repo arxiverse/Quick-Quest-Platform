@@ -1,13 +1,15 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { storeAuthSession } from "../auth.guard";
 import {
   getLoginServiceErrorMessage,
   loginFieldsSeed,
   loginSocialItemsSeed,
   loginViewCopySeed,
   loginWithCredentials,
+  mapLoginResponseToRoleInitPayload,
   type LoginViewCopy,
 } from "./login.service";
+import type { RoleInitPayload } from "../home/role.service";
+import { persistAccessToken } from "../global.service";
 
 export type AuthSocialItem = {
   icon: string;
@@ -117,14 +119,13 @@ export function useLoginFormVM({ routeState, onSubmitLogin }: UseLoginFormVMPara
   };
 }
 
-export async function submitLogin(identity: string, password: string): Promise<void> {
+export async function submitLogin(identity: string, password: string): Promise<RoleInitPayload> {
   const response = await loginWithCredentials(identity, password);
+  persistAccessToken(response.data?.session?.accessToken);
+  return mapLoginResponseToRoleInitPayload(response);
 
-  if (!response.success || !response.data?.session) {
-    throw new Error(response.message || "Session login tidak valid dari backend.");
-  }
-
-  storeAuthSession(response.data.session);
+  // Backend tetap jadi source of truth via cookie, tapi FE simpan access token
+  // di sessionStorage sebagai fallback bearer untuk dev/browser edge cases.
 }
 
 export function getLoginFormErrorMessage(error: unknown): string {

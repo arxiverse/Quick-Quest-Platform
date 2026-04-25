@@ -1,4 +1,5 @@
-﻿export type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+export type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export type ApiErrorPayload = {
   success?: boolean;
@@ -19,26 +20,56 @@ export class ApiRequestError extends Error {
   }
 }
 
+const DEFAULT_STREAM_API_URL = "http://localhost:4450";
+const AUTH_ACCESS_TOKEN_STORAGE_KEY = "qqm-auth-access-token";
+
+function sanitizeEnvUrl(value: string | undefined, fallback: string): string {
+  const normalized = (value ?? "").trim();
+  const raw = normalized || fallback;
+
+  const withoutQuotes =
+    (raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))
+      ? raw.slice(1, -1).trim()
+      : raw;
+
+  return withoutQuotes.replace(/\/+$/, "");
+}
+
+function joinApiUrl(baseUrl: string, path: string): string {
+  const normalizedBase = sanitizeEnvUrl(baseUrl, DEFAULT_STREAM_API_URL);
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 const API_BASE_URLS = {
-  express: import.meta.env.VITE_EXPRESS_API_URL ?? "http://localhost:4450",
-  // [Production] express: import.meta.env.VITE_EXPRESS_API_URL ?? "https://kirashore.com",
-  go: import.meta.env.VITE_GO_API_URL ?? "http://localhost:4460",
-};
+  stream: sanitizeEnvUrl(import.meta.env.VITE_STREAM_API_URL, DEFAULT_STREAM_API_URL),
+} as const;
 
 // Gunakan Localhost untuk Development & Gunakan URL Asli untuk Production
 // Untuk Testing Gunakan URL Asli (Semi-Production)
 
 const ENDPOINTS = {
   auth: {
-    login: `${API_BASE_URLS.express}/api/login`,
-    register: `${API_BASE_URLS.express}/api/register`,
+    login: joinApiUrl(API_BASE_URLS.stream, "/api/login"),
+    register: joinApiUrl(API_BASE_URLS.stream, "/api/register"),
+    logout: joinApiUrl(API_BASE_URLS.stream, "/api/logout"),
   },
   profile: {
-    detail: `${API_BASE_URLS.express}/api/profile`,
+    detail: joinApiUrl(API_BASE_URLS.stream, "/api/profile"),
+    verification: {
+      detail: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification"),
+      draft: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification/draft"),
+      documents: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification/documents"),
+      submit: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification/submit"),
+      resubmit: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification/resubmit"),
+      history: joinApiUrl(API_BASE_URLS.stream, "/api/profile/verification/history"),
+    },
   },
-  gateway: {
-    register: `${API_BASE_URLS.go}/auth/register`,
-  },
+};
+
+export const GOOGLE_MAPS_CONFIG = {
+  apiKey: import.meta.env.VITE_MAPS_API_KEY ?? "",
+  mapId: import.meta.env.VITE_MAPS_ID ?? "",
 };
 
 export type RequestJsonOptions = {
@@ -47,6 +78,67 @@ export type RequestJsonOptions = {
   headers?: HeadersInit;
   credentials?: RequestCredentials;
 };
+
+export function readAccessToken(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.sessionStorage.getItem(AUTH_ACCESS_TOKEN_STORAGE_KEY)?.trim() ?? "";
+}
+
+export function persistAccessToken(token: string | undefined): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const normalized = token?.trim() ?? "";
+  if (!normalized) {
+    window.sessionStorage.removeItem(AUTH_ACCESS_TOKEN_STORAGE_KEY);
+    return;
+  }
+
+  window.sessionStorage.setItem(AUTH_ACCESS_TOKEN_STORAGE_KEY, normalized);
+}
+
+export function clearAccessToken(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(AUTH_ACCESS_TOKEN_STORAGE_KEY);
+}
+
+function createRequestHeaders(headers?: HeadersInit): Headers {
+  const resolved = new Headers(headers);
+
+  if (!resolved.has("Accept")) {
+    resolved.set("Accept", "application/json");
+  }
+
+  if (!resolved.has("Content-Type")) {
+    resolved.set("Content-Type", "application/json");
+  }
+
+  const accessToken = readAccessToken();
+  if (accessToken && !resolved.has("Authorization")) {
+    resolved.set("Authorization", `Bearer ${accessToken}`);
+  }
+
+  return resolved;
+}
+
+function ensureRequestUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.includes("undefined") || trimmed.includes("null")) {
+    throw new ApiRequestError(
+      "Konfigurasi endpoint backend belum valid. Periksa VITE_STREAM_API_URL di React/.env.",
+      500,
+    );
+  }
+
+  return trimmed;
+}
 
 function parseResponsePayload(rawText: string): unknown {
   if (!rawText) {
@@ -74,21 +166,22 @@ function toApiErrorPayload(payload: unknown): ApiErrorPayload {
 
 export async function requestJson<TResponse>(url: string, options: RequestJsonOptions = {}): Promise<TResponse> {
   const { method = "GET", body, headers, credentials = "include" } = options;
+  const resolvedUrl = ensureRequestUrl(url);
+  const requestHeaders = createRequestHeaders(headers);
 
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetch(resolvedUrl, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
+      headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
       credentials,
     });
   } catch (error) {
     throw new ApiRequestError(
-      error instanceof Error ? error.message : "Gagal terhubung ke backend.",
+      error instanceof Error
+        ? error.message
+        : "Gagal terhubung ke backend strict. Periksa host, port, dan CORS.",
       0,
     );
   }
@@ -98,8 +191,12 @@ export async function requestJson<TResponse>(url: string, options: RequestJsonOp
 
   if (!response.ok) {
     const errorPayload = toApiErrorPayload(payload);
+    const fallbackMessage =
+      response.status === 502
+        ? `Backend strict mengembalikan 502 untuk ${method} ${resolvedUrl}. Cek host atau gateway tujuan.`
+        : `Request ke ${resolvedUrl} gagal.`;
     throw new ApiRequestError(
-      errorPayload.message || errorPayload.error || `Request ke ${url} gagal.`,
+      errorPayload.message || errorPayload.error || fallbackMessage,
       response.status,
       errorPayload,
     );
@@ -119,30 +216,30 @@ function GlobalEndpoint() {
   return ENDPOINTS;
 }
 
-function GlobalTesting() {
-  const DataContainer1 = [] = [
-    {
-        id: 101,
-        name: "Test 1",
-        description: "This is a test description for Test 1.",
-        date: "2024-06-01",
-        status: "Active",
-    }
-]
-
-const DataContainer2 = [] = [
-    {
-        id: 102,
-        name: "Test 2",
-        description: "This is a test description for Test 2.",
-        date: "2024-06-01",
-        status: "Active",
-    }
-]
-
-  return {DataContainer1, DataContainer2};
-}
-
-export {GlobalTesting};
-
 export default GlobalEndpoint;
+
+// ----- Testing ----- //
+function Container() {
+  const Container1 = [
+    {
+      id: 1,
+      name: "Test 1",
+      description: "This is a test description for Test 1.",
+      date: "2024-06-01",
+      status: "Active",
+    }
+  ]
+
+  const Container2 = [
+    {
+      id: 2,
+      name: "Test 2",
+      description: "This is a test description for Test 2.",
+      date: "2024-06-01",
+      status: "Active",
+    }
+  ]
+
+  return { Container1, Container2 };
+}
+export { Container };

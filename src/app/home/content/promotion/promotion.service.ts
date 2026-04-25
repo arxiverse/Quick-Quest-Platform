@@ -130,3 +130,71 @@ export const promotionMockItemsSeed: PromotionItem[] = [
     avatarIcon: "🧹",
   },
 ];
+
+export type BoostPackage = {
+  id: string;
+  name: string;
+  price: number;
+  priceLabel: string;
+  durationLabel: string;
+  features: string[];
+  badge: string;
+  isRecommended: boolean;
+};
+
+export const BOOST_PACKAGES_SEED: BoostPackage[] = [
+  {
+    id: "boost-basic",
+    name: "Basic Post",
+    price: 0,
+    priceLabel: "Gratis",
+    durationLabel: "Tanpa Batas Waktu",
+    features: ["Urutan standar algoritma", "Tampil di grid katalog", "Bisa dicari via filter"],
+    badge: "",
+    isRecommended: false,
+  },
+  {
+    id: "boost-vip-24h",
+    name: "VIP Spotlight 24 Jam",
+    price: 25000,
+    priceLabel: "Rp 25.000",
+    durationLabel: "24 Jam",
+    features: [
+      "Slider Hero Banner paling atas",
+      "Label 🔥 Promoted Spotlight",
+      "Prioritas di urutan pencarian",
+      "Estimasi +300% lebih banyak dilihat",
+    ],
+    badge: "PALING LARIS",
+    isRecommended: true,
+  },
+  {
+    id: "boost-vip-7d",
+    name: "VIP Spotlight 7 Hari",
+    price: 99000,
+    priceLabel: "Rp 99.000",
+    durationLabel: "7 Hari",
+    features: [
+      "Semua benefit 24 Jam",
+      "Prioritas MAXIMUM selama seminggu",
+      "Hemat vs beli harian (Rp14rb/hari)",
+      "Laporan analytics tayangan iklan",
+    ],
+    badge: "HEMAT 60%",
+    isRecommended: false,
+  },
+];
+
+export type WalletBalance = {
+  available: number;
+  availableLabel: string;
+  escrow: number;
+  escrowLabel: string;
+};
+
+export const MOCK_WALLET_BALANCE_SEED: WalletBalance = {
+  available: 2450000,
+  availableLabel: "Rp 2.450.000",
+  escrow: 845000,
+  escrowLabel: "Rp 845.000",
+};

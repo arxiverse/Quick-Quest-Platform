@@ -19,6 +19,23 @@ export type RunnerViewCopy = {
     title: string;
     simulationBadge: string;
   };
+  navigator: {
+    home: string;
+    questFeed: string;
+    activeQuest: string;
+    partyLobby: string;
+    insights: string;
+  };
+  home: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    primaryButton: string;
+    secondaryButton: string;
+    activeQuestLabel: string;
+    openQuestLabel: string;
+    partyLobbyLabel: string;
+  };
   activeQuest: {
     eyebrow: string;
     title: string;
@@ -79,6 +96,24 @@ export const runnerViewCopySeed: RunnerViewCopy = {
     eyebrow: "Runner Career Center",
     title: "Identity Kerja, Shift, dan Performa Penghasilan",
     simulationBadge: "Dummy data simulation",
+  },
+  navigator: {
+    home: "Overview",
+    questFeed: "Quest Feed",
+    activeQuest: "Quest Aktif",
+    partyLobby: "Party Lobby",
+    insights: "Insights",
+  },
+  home: {
+    eyebrow: "Runner Mission Control",
+    title: "Pusat Navigasi Runner untuk ambil, jalankan, dan pantau Quest",
+    description:
+      "Nested SPA ini memisahkan konteks runner jadi jelas: feed quest, quest aktif, lobby grup, live map, dan insight performa.",
+    primaryButton: "Buka Quest Feed",
+    secondaryButton: "Lihat Quest Aktif",
+    activeQuestLabel: "Quest Aktif",
+    openQuestLabel: "Quest Terbuka",
+    partyLobbyLabel: "Lobby Grup",
   },
   activeQuest: {
     eyebrow: "Quest Aktif",
@@ -247,6 +282,130 @@ export const runnerOpenParties: RunnerOpenParty[] = [
   },
 ];
 
+export type RunnerQuestFeedItem = {
+  id: string;
+  title: string;
+  giver: string;
+  giverBadge: string;
+  category: string;
+  reward: string;
+  distanceKm: number;
+  locationLabel: string;
+  locationAddress: string;
+  mode: "solo" | "group";
+  matchScore: number;
+  slotFilled: number;
+  slotTotal: number;
+  postedAt: string;
+  estimatedDuration: string;
+  briefSummary: string;
+  description: string;
+  targetChecklist: string[];
+};
+
+export const runnerQuestFeedSeed: RunnerQuestFeedItem[] = [
+  {
+    id: "QF-201",
+    title: "Rapikan Etalase Minimarket Shift Pagi",
+    giver: "Mitra Ritel Harmoni",
+    giverBadge: "Verified Giver",
+    category: "Retail Display",
+    reward: "Rp 140.000",
+    distanceKm: 0.7,
+    locationLabel: "Cilandak Barat",
+    locationAddress: "Jl. Intan Ruko Blok B2, Cilandak Barat, Jakarta Selatan",
+    mode: "solo",
+    matchScore: 94,
+    slotFilled: 1,
+    slotTotal: 1,
+    postedAt: "24 Apr 2026, 07:15",
+    estimatedDuration: "2 - 3 jam",
+    briefSummary: "Butuh runner teliti untuk rapikan rak promo dan stok pending.",
+    description:
+      "Giver membutuhkan runner untuk merapikan area etalase minimarket sebelum jam ramai pagi. Fokus utama ada di rak promosi depan, pengecekan harga display, dan penyelarasan stok ringan yang tertinggal semalam.",
+    targetChecklist: [
+      "Rak promo depan kembali rapi dan facing produk seragam",
+      "Label harga utama sudah terpasang dan terbaca",
+      "Foto bukti sebelum dan sesudah pengerjaan dikirim",
+    ],
+  },
+  {
+    id: "QF-202",
+    title: "Tim Bongkar Muat Gudang Area Selatan",
+    giver: "Logistik Nusantara",
+    giverBadge: "Business Giver",
+    category: "Warehouse",
+    reward: "Rp 280.000",
+    distanceKm: 1.9,
+    locationLabel: "Pasar Minggu",
+    locationAddress: "Gudang Selatan 8, Jl. Raya Tanjung Barat No. 18, Jakarta Selatan",
+    mode: "group",
+    matchScore: 88,
+    slotFilled: 2,
+    slotTotal: 4,
+    postedAt: "24 Apr 2026, 06:40",
+    estimatedDuration: "4 jam",
+    briefSummary: "Quest kelompok untuk loading sore. Safety vest wajib.",
+    description:
+      "Quest kelompok untuk proses bongkar muat barang masuk ke gudang area selatan. Tim runner akan dibagi per zona pallet dan harus mengikuti instruksi supervisor lapangan dari giver.",
+    targetChecklist: [
+      "Minimal 4 runner hadir sebelum briefing dimulai",
+      "Setiap pallet berhasil dipindah ke zona yang ditentukan",
+      "Dokumentasi akhir jumlah pallet terinput di chat grup",
+    ],
+  },
+  {
+    id: "QF-203",
+    title: "Cleaning Cepat Kios Setelah Tutup",
+    giver: "Kios Sembada",
+    giverBadge: "Trusted Giver",
+    category: "Cleaning",
+    reward: "Rp 110.000",
+    distanceKm: 1.2,
+    locationLabel: "Kemang",
+    locationAddress: "Jl. Kemang Timur No. 21, kios depan area parkir",
+    mode: "solo",
+    matchScore: 91,
+    slotFilled: 1,
+    slotTotal: 1,
+    postedAt: "24 Apr 2026, 08:00",
+    estimatedDuration: "1.5 jam",
+    briefSummary: "Pembersihan area depan dan rak pendinginan setelah operasional.",
+    description:
+      "Pekerjaan cleaning ringan sampai menengah untuk kios setelah tutup operasional pagi. Area fokus ada di lantai depan, rak pendingin, dan area kasir agar siap untuk shift berikutnya.",
+    targetChecklist: [
+      "Lantai depan bersih tanpa sampah sisa operasional",
+      "Rak pendingin lap bersih dan bebas tetesan",
+      "Area kasir dan meja packing kembali rapi",
+    ],
+  },
+  {
+    id: "QF-204",
+    title: "Crew Event Pop-Up Weekend",
+    giver: "Neo Comm",
+    giverBadge: "Premium Giver",
+    category: "Event Support",
+    reward: "Rp 350.000",
+    distanceKm: 2.4,
+    locationLabel: "Blok M",
+    locationAddress: "Area Plaza Blok M, Gate Selatan Event Hall",
+    mode: "group",
+    matchScore: 86,
+    slotFilled: 3,
+    slotTotal: 5,
+    postedAt: "24 Apr 2026, 05:55",
+    estimatedDuration: "6 jam",
+    briefSummary: "Perlu koordinasi tim, briefing online, dan check-in tepat waktu.",
+    description:
+      "Quest grup untuk crew event pop-up weekend. Runner akan membantu set-up booth, alur pengunjung, distribusi materi promosi, dan jaga kebersihan area selama event berlangsung.",
+    targetChecklist: [
+      "Crew lengkap saat check-in awal",
+      "Booth utama siap sebelum event dibuka",
+      "Koordinasi tugas antar runner stabil sepanjang event",
+    ],
+  },
+];
+
 export const runnerPartyLobbyInfoSeed: RunnerPartyLobbyInfo[] = [
   {
     id: "P-101",
@@ -291,3 +450,30 @@ export const runnerPartyLobbyChatMessages: RunnerPartyLobbyChatMessage[] = [
     content: "Siaap pak, saya meluncur 5 menit lagi.",
   },
 ];
+
+// Phase 3: Maps Live Service Logic
+export interface RunnerRawCoords {
+  lat: number;
+  lng: number;
+}
+
+// Dummy location: Pontianak (Khatulistiwa)
+export const RUNNER_MOCK_LOCATION: RunnerRawCoords = { lat: -0.0227, lng: 109.3340 };
+
+export const getRunnerDeviceLocationRaw = (): Promise<RunnerRawCoords> => {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(RUNNER_MOCK_LOCATION);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {
+        // Fallback to mock instead of reject
+        resolve(RUNNER_MOCK_LOCATION);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  });
+};

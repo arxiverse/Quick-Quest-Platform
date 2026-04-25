@@ -433,3 +433,24 @@ export const giverPostQuestInsights: GiverPostQuestInsight[] = [
     tone: "bg-[#FEF3C7] text-[#92400E]",
   },
 ];
+
+// Data Statis untuk VM Quest Editor
+export const QQM_SKILL_TAGS = [
+  "Kebersihan & Rumah Tangga",
+  "Event & Hiburan",
+  "Logistik & Pengiriman",
+  "Teknologi & IT",
+  "Desain & Kreatif",
+  "Pengetikan & Admin",
+  "Pendidikan & Tutor",
+  "Pertanian & Lingkungan",
+  "Kuliner & Katering",
+  "Keamanan & Pengawasan",
+  "Kesehatan & Perawatan",
+  "Keuangan & Akuntansi",
+];
+
+export const QQM_PLATFORM_FEE_PERCENT = 5;
+
+export type EditorQuestType = "SOLO" | "KELOMPOK";
+export type EditorStep = 1 | 2 | 3;

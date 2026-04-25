@@ -1,5 +1,11 @@
-/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from "react";
+
+export function initializeTheme() {
+  if (typeof window !== "undefined") {
+    const storedTheme = localStorage.getItem("theme") || "Neiravoid";
+    document.documentElement.setAttribute("data-theme", storedTheme);
+  }
+}
 
 function themeAttribute() {
   const currentTheme = document.documentElement.getAttribute("data-theme");
@@ -76,7 +82,7 @@ export function useAnimationTheme() {
   const [animationsEnabled, setAnimationsEnabledState] = useState<boolean>(
     () => {
       if (typeof window === "undefined") return true;
-      return localStorage.getItem("qqm-animations") !== "false"; // Default to true if not explicitly false
+      return localStorage.getItem("qqm-animations") !== "false";
     },
   );
 

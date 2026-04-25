@@ -1,14 +1,16 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useRoute } from "../../../route.context";
+import { useAuth } from "../../../auth.context";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Logo from "../../../../assets/Figma/QQMLogo.png";
 import { cn, Surface } from "../../home.ui";
 import {
-  clearProfileSession,
   economicImpactItems,
   formatReliabilityValue,
   growthPathItems,
   initialProfileSettingState,
   loadHomeProfile,
+  loadProfileDetail,
+  loadProfileVerificationState,
   portfolioContracts,
   ppIntelligenceRows,
   profileBadges,
@@ -18,20 +20,26 @@ import {
   profileStats,
   profileViewText,
   reliabilityTrends,
+  resolveInitialProfileVerificationState,
   resolveContractStatusClass,
   resolveInitialProfileSubView,
+  resolveProfileStorageScope,
   resolveLevelClass,
   resolveReliabilityTrendClass,
+  resolveVerificationStatusPresentation,
+  syncProfileVerificationStorage,
+  syncProfileVerificationWithBackend,
   syncProfileSubViewStorage,
   type ProfileProps,
   type ProfileSubView,
+  type ProfileVerificationState,
   type ProfileStatItem,
   type SettingTabKey,
-  verificationLayer,
 } from "./profile";
 import type { HomeProfile } from "../../home";
 import { EditProfile } from "./page/edit-profile";
 import { KycSettlement } from "./page/kyc-settlement";
+import { VerificationCenter } from "./page/verification-center";
 import { useAnimationTheme } from "../../../global.theme";
 import Aurora from "../../../../Animation/Aurora";
 import BorderGlow from "../../../../Animation/BorderGlow";
@@ -253,16 +261,30 @@ function ProfileIdentityRow({
 }
 
 export function ProfileContent({ profile }: { profile: HomeProfile }) {
-  const navigate = useNavigate();
+  const { navigate } = useRoute();
+  const { logoutClient, userProfile } = useAuth();
+  const storageScope = resolveProfileStorageScope(userProfile);
   const [resolvedProfile, setResolvedProfile] = useState<HomeProfile>(profile);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileAuthorization, setProfileAuthorization] = useState<string>(
+    userProfile?.authorization?.trim() || "user",
+  );
   const [activeSettingTab, setActiveSettingTab] =
     useState<SettingTabKey>("Umum");
-  const [settingState, setSettingState] =
-    useState<Record<string, boolean>>(initialProfileSettingState);
-  const [subView, setSubView] = useState<ProfileSubView | null>(
-    resolveInitialProfileSubView,
+  const [settingState, setSettingState] = useState<Record<string, boolean>>(
+    initialProfileSettingState,
   );
+  const [subView, setSubView] = useState<ProfileSubView | null>(
+    () => resolveInitialProfileSubView(storageScope),
+  );
+  const [verificationState, setVerificationState] =
+    useState<ProfileVerificationState>(() =>
+      resolveInitialProfileVerificationState(
+        storageScope,
+        profile,
+        "user_runner",
+      ),
+    );
   const { animationsEnabled, setAnimationsEnabled } = useAnimationTheme();
   const { isGiverVerified, syncUserRoleFromBackend } = useRole();
 
@@ -270,30 +292,106 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
     let isCancelled = false;
 
     async function loadProfile() {
-      const result = await loadHomeProfile(profile);
+      const result = loadHomeProfile(profile, userProfile);
       if (isCancelled) return;
 
       if (result.shouldRedirectToLogin) {
-        navigate("/login", { replace: true });
+        logoutClient();
+        navigate("login");
         return;
       }
 
       if (result.backendUserRole) {
         syncUserRoleFromBackend(result.backendUserRole);
+        setVerificationState((currentState) =>
+          syncProfileVerificationWithBackend(
+            currentState,
+            result.profile,
+            result.backendUserRole ?? "user_runner",
+          ),
+        );
       }
       setResolvedProfile(result.profile);
       setProfileError(result.errorMessage ?? null);
+      setProfileAuthorization(result.authorization ?? "user");
+
+      try {
+        const detailResult = await loadProfileDetail(result.profile);
+        if (isCancelled) return;
+
+        if (detailResult.backendUserRole) {
+          syncUserRoleFromBackend(detailResult.backendUserRole);
+          setVerificationState((currentState) =>
+            syncProfileVerificationWithBackend(
+              currentState,
+              detailResult.profile,
+              detailResult.backendUserRole ?? "user_runner",
+            ),
+          );
+        }
+
+        setResolvedProfile(detailResult.profile);
+        setProfileAuthorization(detailResult.authorization ?? "user");
+        setProfileError(null);
+
+        try {
+          const verificationResult = await loadProfileVerificationState(
+            detailResult.profile,
+          );
+          if (isCancelled) return;
+          setVerificationState(verificationResult);
+        } catch {
+          if (isCancelled) return;
+          // Biarkan fallback ke state scoped lokal jika summary verification backend belum bisa dimuat.
+        }
+      } catch (error) {
+        if (isCancelled) return;
+
+        const status =
+          typeof error === "object" &&
+          error !== null &&
+          "statusCode" in error &&
+          typeof (error as { statusCode?: unknown }).statusCode === "number"
+            ? ((error as { statusCode: number }).statusCode)
+            : null;
+
+        if (status === 401) {
+          await logoutClient();
+          navigate("login");
+          return;
+        }
+
+        setProfileError("Data profile backend belum bisa dimuat penuh, jadi sementara pakai snapshot session.");
+      }
     }
 
-    loadProfile();
+    void loadProfile();
     return () => {
       isCancelled = true;
     };
-  }, [navigate, profile, syncUserRoleFromBackend]);
+  }, [navigate, profile, storageScope, syncUserRoleFromBackend, userProfile]);
 
   useEffect(() => {
-    syncProfileSubViewStorage(subView);
-  }, [subView]);
+    setSubView(resolveInitialProfileSubView(storageScope));
+  }, [storageScope]);
+
+  useEffect(() => {
+    syncProfileSubViewStorage(storageScope, subView);
+  }, [storageScope, subView]);
+
+  useEffect(() => {
+    setVerificationState(
+      resolveInitialProfileVerificationState(
+        storageScope,
+        resolvedProfile,
+        isGiverVerified ? "user_unlocked" : "user_runner",
+      ),
+    );
+  }, [isGiverVerified, resolvedProfile, storageScope]);
+
+  useEffect(() => {
+    syncProfileVerificationStorage(storageScope, verificationState);
+  }, [storageScope, verificationState]);
 
   const maxPpResult = useMemo(
     () => Math.max(...ppIntelligenceRows.map((row) => row.result), 1),
@@ -313,6 +411,17 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
   const settingCompletion = Math.round(
     (activeEnabledCount / activeSettings.length) * 100,
   );
+  const verificationPresentation =
+    resolveVerificationStatusPresentation(verificationState);
+  const canOpenAdminPanel = profileAuthorization.trim().toLowerCase() !== "user";
+
+  function handleAdminSideEntry() {
+    if (typeof window === "undefined" || !canOpenAdminPanel) {
+      return;
+    }
+
+    window.dispatchEvent(new Event("qqm-enter-admin-panel"));
+  }
 
   function toggleSetting(itemId: string) {
     if (itemId === "personal-dynamic-animation") {
@@ -330,6 +439,17 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
 
   if (subView?.view === "KycSettlement") {
     return <KycSettlement onBack={() => setSubView(null)} />;
+  }
+
+  if (subView?.view === "VerificationCenter") {
+    return (
+      <VerificationCenter
+        profile={resolvedProfile}
+        verificationState={verificationState}
+        onChange={setVerificationState}
+        onBack={() => setSubView(null)}
+      />
+    );
   }
 
   return (
@@ -372,19 +492,15 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               </div>
             </div>
             <div className="flex shrink-0 flex-col gap-2 lg:min-w-44">
-              {!isGiverVerified ? (
+              {canOpenAdminPanel ? (
                 <button
                   type="button"
-                  disabled
-                  className="btn h-10 min-h-10 rounded-[8px] border-none bg-base-300 px-5 text-sm text-base-content/60 shadow-none sm:h-11 sm:min-h-11 sm:px-6"
+                  onClick={handleAdminSideEntry}
+                  className="btn h-10 min-h-10 rounded-[8px] border-none bg-neutral px-5 text-sm text-neutral-content shadow-none hover:opacity-90 sm:h-11 sm:min-h-11 sm:px-6"
                 >
-                  {profileViewText.waitingGiverLabel}
+                  Admin Side
                 </button>
-              ) : (
-                <span className="inline-flex h-10 items-center justify-center rounded-[8px] bg-success/15 px-4 text-xs font-semibold text-success sm:h-11">
-                  {profileViewText.giverActiveLabel}
-                </span>
-              )}
+              ) : null}
               <button
                 type="button"
                 onClick={() => setSubView({ view: "EditProfile" })}
@@ -392,13 +508,16 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
               >
                 {profileViewText.editButtonLabel}
               </button>
-              <Link
-                to="/login"
-                onClick={() => clearProfileSession()}
+              <button
+                type="button"
+                onClick={async () => {
+                  await logoutClient();
+                  navigate("login");
+                }}
                 className="btn h-10 min-h-10 rounded-[8px] border-none bg-error px-5 text-sm text-error-content shadow-none hover:opacity-90 sm:h-11 sm:min-h-11 sm:px-6"
               >
                 {profileViewText.logoutButtonLabel}
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -413,25 +532,38 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
                 {profileViewText.verificationEyebrow}
               </p>
               <h3 className="mt-1 text-lg font-bold text-base-content">
-                {profileViewText.verificationTitle}
+                {verificationPresentation.headline}
               </h3>
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-[999px] bg-[#DCFCE7] px-2.5 py-1 text-[11px] font-bold text-[#166534]">
-                  {verificationLayer.kycStatus}
+                <span
+                  className={`rounded-[999px] px-2.5 py-1 text-[11px] font-bold ${verificationPresentation.pillClassName}`}
+                >
+                  {verificationPresentation.pillLabel}
                 </span>
                 <span className="rounded-[999px] bg-[#DBEAFE] px-2.5 py-1 text-[11px] font-bold text-[#1D4ED8]">
-                  {verificationLayer.verifiedBadge}
+                  Stage {verificationState.stage}
                 </span>
                 <span className="rounded-[999px] bg-[#E9D5FF] px-2.5 py-1 text-[11px] font-bold text-[#6D28D9]">
-                  {verificationLayer.trustTier}
+                  {verificationState.trustTier}
                 </span>
                 <span className="rounded-[999px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-bold text-[#92400E]">
-                  {verificationLayer.riskBand}
+                  {verificationState.riskBand}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-base-content/65">
-                {profileViewText.verificationLastReviewPrefix} {verificationLayer.lastReview}
+              <p className="mt-2 text-xs leading-relaxed text-base-content/65">
+                {verificationState.reviewerNote}
               </p>
+              <p className="mt-2 text-xs text-base-content/65">
+                {profileViewText.verificationLastReviewPrefix}{" "}
+                {verificationState.updatedAtLabel}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSubView({ view: "VerificationCenter" })}
+                className="btn mt-4 h-10 min-h-10 rounded-[10px] border-none bg-primary px-4 text-sm text-primary-content shadow-none hover:opacity-90"
+              >
+                {verificationPresentation.actionLabel}
+              </button>
             </div>
           </div>
 
@@ -669,7 +801,8 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
                     {profileViewText.portfolioValuePrefix} {item.valueDelivered}
                   </div>
                   <div className="rounded-[8px] bg-base-200 px-2.5 py-1.5 font-semibold text-base-content/75">
-                    {profileViewText.portfolioRepeatPrefix} {item.repeatGiverRate}
+                    {profileViewText.portfolioRepeatPrefix}{" "}
+                    {item.repeatGiverRate}
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-base-content/65">
@@ -814,7 +947,7 @@ export function ProfileContent({ profile }: { profile: HomeProfile }) {
                 <input
                   type="checkbox"
                   className="checkbox checkbox-sm mt-0.5"
-                          checked={effectiveSettingState[item.id]}
+                  checked={effectiveSettingState[item.id]}
                   onChange={() => toggleSetting(item.id)}
                 />
                 <div>

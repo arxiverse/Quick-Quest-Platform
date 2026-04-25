@@ -1,5 +1,8 @@
 import {
   analysisRoleDataSeed,
+  analysisNestedMenuSeed,
+  analysisRunnerMetricSubViewSeed,
+  analysisGiverMetricSubViewSeed,
   analysisCohortRetentionPoints,
   analysisCompareByRange,
   analysisDefaultStateSeed,
@@ -85,12 +88,12 @@ export type AnalysisSlaOutlier = {
 
 export type AnalysisEscrowStatePoint = {
   state:
-    | "UNPAID"
-    | "LOCKED"
-    | "IN_PROGRESS"
-    | "PENDING_CONFIRMATION"
-    | "RELEASED"
-    | "DISPUTED";
+  | "UNPAID"
+  | "LOCKED"
+  | "IN_PROGRESS"
+  | "PENDING_CONFIRMATION"
+  | "RELEASED"
+  | "DISPUTED";
   total: number;
 };
 
@@ -182,6 +185,48 @@ export type AnalysisLeaderboardMovementTone = {
   toneClass: string;
 };
 
+export type AnalysisSubView =
+  | "runner_metrics"
+  | "runner_metric_gmv"
+  | "runner_metric_match_rate"
+  | "runner_metric_fill_time"
+  | "runner_metric_completion"
+  | "runner_metric_dispute"
+  | "runner_metric_escrow_released"
+  | "runner_time_range"
+  | "runner_funnel"
+  | "runner_scope_analytics"
+  | "runner_supply_demand"
+  | "runner_sla_response"
+  | "runner_escrow_health"
+  | "runner_risk_panel"
+  | "runner_pp_intelligence"
+  | "runner_cohort_retention"
+  | "runner_insight_panel"
+  | "giver_metrics"
+  | "giver_metric_broadcast"
+  | "giver_metric_fill_rate"
+  | "giver_metric_avg_match"
+  | "giver_metric_escrow_locked"
+  | "giver_metric_dispute"
+  | "giver_metric_escrow_released"
+  | "giver_time_range"
+  | "giver_funnel"
+  | "giver_scope_analytics"
+  | "giver_supply_demand"
+  | "giver_sla_response"
+  | "giver_escrow_health"
+  | "giver_risk_panel"
+  | "giver_pp_intelligence"
+  | "giver_cohort_retention"
+  | "giver_insight_panel";
+
+export type AnalysisNestedMenuItem = {
+  key: AnalysisSubView;
+  label: string;
+  description: string;
+};
+
 export const analysisDefaultState: AnalysisDefaultState = {
   ...analysisDefaultStateSeed,
 };
@@ -204,6 +249,34 @@ export function resolveAnalysisRoleContext(
 
 export function resolveAnalysisRoleData(roleContext: AnalysisRoleContext): AnalysisRoleData {
   return analysisRoleDataSeed[roleContext] ?? analysisRoleDataSeed.runner;
+}
+
+export function resolveAnalysisNestedMenuItems(
+  roleContext: AnalysisRoleContext,
+): AnalysisNestedMenuItem[] {
+  const source =
+    roleContext === "giver"
+      ? analysisNestedMenuSeed.giver
+      : analysisNestedMenuSeed.runner;
+
+  return source.map((item) => ({
+    key: item.key as AnalysisSubView,
+    label: item.label,
+    description: item.description,
+  }));
+}
+
+export function resolveAnalysisMetricSubView(
+  roleContext: AnalysisRoleContext,
+  index: number,
+): AnalysisSubView {
+  const source =
+    roleContext === "giver"
+      ? analysisGiverMetricSubViewSeed
+      : analysisRunnerMetricSubViewSeed;
+  const fallback = roleContext === "giver" ? "giver_metrics" : "runner_metrics";
+
+  return (source[index] as AnalysisSubView) ?? fallback;
 }
 
 const ANALYSIS_EMPTY_SUPPLY_DEMAND_POINT: AnalysisSupplyDemandPoint = {

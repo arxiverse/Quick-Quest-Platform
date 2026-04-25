@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+// Removed react-router-dom import
 import Logo from "../../../../assets/Figma/QQMLogo.png";
 import { homeIconRegistry } from "../../home.icons";
 import { cn, Surface } from "../../home.ui";
@@ -46,9 +46,9 @@ function NavbarButton({
 
   if (item.to) {
     return (
-      <Link to={item.to} className={sharedClassName}>
+      <button type="button" onClick={onActivate} className={sharedClassName}>
         {content}
-      </Link>
+      </button>
     );
   }
 

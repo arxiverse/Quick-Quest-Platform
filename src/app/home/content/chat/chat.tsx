@@ -5,6 +5,7 @@ import {
   chatListFilters,
   filterChatThreads,
   isChatPhotoAttachment,
+  isChatLocationAttachment,
   resolveInitialChatActionChipId,
   resolveChatAttachmentStatusClass,
   resolveChatEscrowTone,
@@ -379,7 +380,23 @@ function ChatDetailPanel({
                       {attachment.type}
                     </p>
                     {isChatPhotoAttachment(attachment.type) ? (
-                      <div className="mt-2 h-16 rounded-[8px] border border-base-300/70 bg-linear-to-br from-base-200 to-base-100" />
+                      <div className="mt-2 h-16 rounded-[8px] border border-base-300/70 bg-linear-to-br from-base-200 to-base-100 flex items-center justify-center text-xl shadow-inner">
+                        📷
+                      </div>
+                    ) : null}
+                    {isChatLocationAttachment(attachment.type) ? (
+                      <div className="mt-3 p-3 rounded-[10px] border border-[#38BDF8]/40 bg-[#38BDF8]/5 flex items-center justify-between group cursor-pointer hover:bg-[#38BDF8]/10 transition-colors animate-in fade-in zoom-in-95">
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-xl drop-shadow-[#38BDF8]_0_0_8px">📍</span>
+                          <div>
+                            <p className="font-bold text-[#38BDF8] leading-tight">Peta Lokasi Tugas</p>
+                            <p className="text-[10px] text-base-content/60 mt-0.5">Ketuk untuk buka Radar</p>
+                          </div>
+                        </div>
+                        <button className="btn btn-xs h-7 min-h-7 bg-[#38BDF8] text-white hover:bg-[#0284C7] border-none shrink-0 group-hover:scale-105 transition-transform flex items-center gap-1 shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+                          Rute
+                        </button>
+                      </div>
                     ) : null}
                     <p className="mt-2 truncate text-[11px] text-base-content/65">
                       {attachment.detail}

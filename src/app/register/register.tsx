@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useRoute } from "../route.context";
 import { SwitchTheme } from "../global.theme";
 import Logo from "../../assets/Figma/QQMLogo.png";
 import BorderGlow from "../../Animation/BorderGlow";
+import FadeContent from "../../Animation/Fade";
 import {
   DUMMY_OTP_CODE,
   registerSocialItems,
@@ -66,7 +67,7 @@ function RegisterFieldControl({
 }
 
 function RegisterForm() {
-  const navigate = useNavigate();
+  const { navigate } = useRoute();
 
   const {
     formState,
@@ -80,14 +81,8 @@ function RegisterForm() {
     handleSubmit,
     handleBack,
   } = useRegisterFormVM({
-    onSubmitSuccess: (response, submittedForm) => {
-      navigate("/login", {
-        replace: true,
-        state: {
-          flashMessage: response.message || "Register berhasil, lanjut login ya.",
-          identityHint: submittedForm.email || submittedForm.username,
-        },
-      });
+    onSubmitSuccess: () => {
+      navigate("login");
     },
   });
 
@@ -181,9 +176,13 @@ function RegisterForm() {
 
       <p className="mt-10 text-center text-xs text-base-content/80">
         {registerViewText.loginPrefixLabel}{" "}
-        <Link to="/login" className="font-medium text-[#4C8DFF] hover:underline">
+        <button 
+          type="button" 
+          onClick={() => navigate("login")} 
+          className="font-medium text-[#4C8DFF] hover:underline"
+        >
           {registerViewText.loginLinkLabel}
-        </Link>
+        </button>
       </p>
     </form>
   );
@@ -191,27 +190,29 @@ function RegisterForm() {
 
 function RegisterComponent() {
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-base-100 px-3 py-4 font-sans text-base-content sm:px-4">
+    <div className="theme-bg min-h-screen w-full overflow-x-hidden bg-base-100 px-3 py-4 font-sans text-base-content sm:px-4">
       <div className="mx-auto flex w-full max-w-5xl justify-end">
         <SwitchTheme />
       </div>
 
       <div className="auth-stage mx-auto flex w-full max-w-5xl items-center justify-center overflow-x-hidden">
-        <BorderGlow
-          className="w-full max-w-[520px] overflow-hidden"
-          edgeSensitivity={30}
-          coneSpread={14}
-          glowColor="270 95 70"
-          backgroundColor="var(--color-base-100)"
-          borderRadius={28}
-          glowRadius={80}
-          glowIntensity={1.1}
-          animated={true}
-          colors={["#6600FF", "#A046FF", "#38BDF8"]}
-          fillOpacity={0.14}
-        >
-          <RegisterForm />
-        </BorderGlow>
+        <FadeContent blur={true} duration={1200} ease="power2.out" className="w-full max-w-[520px]">
+          <BorderGlow
+            className="w-full overflow-hidden"
+            edgeSensitivity={30}
+            coneSpread={14}
+            glowColor="270 95 70"
+            backgroundColor="var(--color-base-100)"
+            borderRadius={28}
+            glowRadius={80}
+            glowIntensity={1.1}
+            animated={true}
+            colors={["#6600FF", "#A046FF", "#38BDF8"]}
+            fillOpacity={0.14}
+          >
+            <RegisterForm />
+          </BorderGlow>
+        </FadeContent>
       </div>
     </div>
   );

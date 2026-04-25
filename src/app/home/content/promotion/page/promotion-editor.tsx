@@ -1,7 +1,17 @@
+import { useState, useRef } from "react";
 import { ArrowLeftIcon } from "../../../home.icons";
-import { Surface } from "../../../home.ui";
+import { Surface, cn } from "../../../home.ui";
 
-export function PromotionEditor({ onBack }: { onBack: () => void }) {
+export function PromotionEditor({
+  onBack,
+  onBoostPayment,
+}: {
+  onBack: () => void;
+  onBoostPayment?: (boostPackageId: string, postTitle: string) => void;
+}) {
+  const [selectedPackage, setSelectedPackage] = useState("basic");
+  const titleRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
       <button
@@ -30,6 +40,7 @@ export function PromotionEditor({ onBack }: { onBack: () => void }) {
               </span>
             </label>
             <input
+              ref={titleRef}
               type="text"
               placeholder="Contoh: Jasa Joki Rank Valorant Radiant"
               className="input h-10 min-h-10 w-full bg-base-200 border-transparent focus:border-primary text-sm"
@@ -95,6 +106,66 @@ export function PromotionEditor({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
+          {/* Upsell Boost Engine */}
+          <div className="mt-8 pt-6 border-t border-base-200">
+            <label className="label pb-3">
+              <span className="label-text font-bold text-xs uppercase tracking-wide text-base-content/70">
+                Pilih Eksposur Tayangan (Ads Boost)
+              </span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div
+                onClick={() => setSelectedPackage("basic")}
+                className={cn(
+                  "cursor-pointer rounded-[12px] border-2 p-4 transition-all",
+                  selectedPackage === "basic"
+                    ? "border-base-300 bg-base-200"
+                    : "border-transparent bg-base-100 hover:border-base-300/50",
+                )}
+              >
+                <div className="flex items-center justify-between font-bold mb-1">
+                  <span>Basic Post</span>
+                  <span className="text-base-content/60 text-sm">Gratis</span>
+                </div>
+                <p className="text-xs text-base-content/60 leading-relaxed">
+                  Postingan akan masuk ke urutan standar sesuai algoritma
+                  *matching* dan pencarian biasa.
+                </p>
+              </div>
+
+              <div
+                onClick={() => setSelectedPackage("vip")}
+                className={cn(
+                  "cursor-pointer rounded-[12px] border-2 p-4 transition-all relative overflow-hidden group",
+                  selectedPackage === "vip"
+                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                    : "border-[#A046FF]/30 bg-base-100 hover:border-primary/60",
+                )}
+              >
+                {selectedPackage === "vip" && (
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-primary/20 rounded-bl-full blur-[20px] pointer-events-none" />
+                )}
+                <div className="flex items-center justify-between font-bold mb-1 relative z-10">
+                  <span className="bg-linear-to-r from-[#A046FF] to-[#38BDF8] bg-clip-text text-transparent">
+                    VIP Spotlight Boost
+                  </span>
+                  <span className="text-primary text-sm">Rp 25.000</span>
+                </div>
+                <p className="text-xs text-base-content/70 leading-relaxed font-medium relative z-10">
+                  🔥 Dipajang permanen di **Slider Atas (Hero Banner)** selama
+                  24 Jam. Jaminan orderan meledak!
+                </p>
+                {selectedPackage === "vip" && (
+                  <div className="absolute top-3 right-3">
+                    <span className="flex size-3 items-center justify-center rounded-full bg-primary/20">
+                      <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-base-200">
             <button
               onClick={onBack}
@@ -102,8 +173,20 @@ export function PromotionEditor({ onBack }: { onBack: () => void }) {
             >
               Batal Draft
             </button>
-            <button className="btn h-10 min-h-10 bg-primary text-primary-content hover:bg-primary/90 border-none font-bold px-8 shadow-md shadow-primary/25">
-              Publikasikan Jasa 🚀
+            <button
+              onClick={() => {
+                if (selectedPackage === "vip" && onBoostPayment) {
+                  const title = titleRef.current?.value || "Postingan Jasa Baru";
+                  onBoostPayment("boost-vip-24h", title);
+                } else {
+                  onBack();
+                }
+              }}
+              className="btn h-10 min-h-10 bg-primary text-primary-content hover:bg-primary/90 border-none font-bold px-8 shadow-md shadow-primary/25"
+            >
+              {selectedPackage === "vip"
+                ? "Bayar & Publikasikan 🚀"
+                : "Publikasikan Jasa P2P"}
             </button>
           </div>
         </div>

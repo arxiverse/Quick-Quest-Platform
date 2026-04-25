@@ -1,4 +1,4 @@
-﻿import type { ChatActionChip, ChatThread } from "./chat";
+import type { ChatActionChip, ChatThread } from "./chat";
 
 export const CHAT_ESCROW_FLOW_SEED = [
   "UNPAID",
@@ -134,6 +134,7 @@ export const chatThreads: ChatThread[] = [
       { id: "m-901-4", role: "system", text: "System: Escrow state aktif di IN_PROGRESS.", time: "09:12" },
     ],
     attachments: [
+      { id: "a-901-0", type: "Location Pin", title: "Target Lokasi Tugas", detail: "Pontianak (Mocked Khatulistiwa)", status: "Uploaded" },
       { id: "a-901-1", type: "Before Photo", title: "Kondisi rak awal", detail: "IMG_20260412_0905.jpg", status: "Uploaded" },
       { id: "a-901-2", type: "After Photo", title: "Rak sesudah dirapikan", detail: "Belum diunggah", status: "Pending" },
       { id: "a-901-3", type: "Brief File", title: "Brief Restock Area A", detail: "brief-restock-v2.pdf", status: "Reviewed" },
@@ -333,6 +334,7 @@ export const chatGiverThreads: ChatThread[] = [
       { id: "gm-901-3", role: "system", text: "System: Escrow state aktif di IN_PROGRESS.", time: "09:12" },
     ],
     attachments: [
+      { id: "ga-901-0", type: "Location Pin", title: "Target Lokasi Tugas", detail: "Pontianak (Mocked Khatulistiwa)", status: "Uploaded" },
       { id: "ga-901-1", type: "Before Photo", title: "Kondisi rak awal", detail: "IMG_20260412_0905.jpg", status: "Uploaded" },
       { id: "ga-901-2", type: "After Photo", title: "Rak sesudah dirapikan", detail: "Belum diunggah oleh runner", status: "Pending" },
       { id: "ga-901-3", type: "Brief File", title: "Brief Restock Area A", detail: "brief-restock-v2.pdf", status: "Reviewed" },

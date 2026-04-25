@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/generate-sw.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prod": "serve -s dist -l 5173"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -15,6 +16,8 @@
     "@react-three/fiber": "^9.5.0",
     "@redis-ai/langcache": "^0.11.1",
     "@tailwindcss/vite": "^4.2.2",
+    "@vis.gl/react-google-maps": "^1.8.3",
+    "axios": "^1.15.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
     "framer-motion": "^12.38.0",
@@ -23,10 +26,11 @@
     "motion": "^12.38.0",
     "node_hash": "^0.2.0",
     "ogl": "^1.0.11",
+    "path": "^0.12.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-icons": "^5.6.0",
-    "react-router-dom": "^7.13.2",
+    "react-router-dom": "^7.14.2",
     "recharts": "^3.8.1",
     "redis": "^5.12.1",
     "tailwind-merge": "^3.5.0",
@@ -39,6 +43,7 @@
     "@eslint/js": "^9.39.4",
     "@rolldown/plugin-babel": "^0.2.1",
     "@types/babel__core": "^7.20.5",
+    "@types/google.maps": "^3.64.0",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

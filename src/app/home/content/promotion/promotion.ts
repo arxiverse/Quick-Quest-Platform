@@ -3,8 +3,14 @@ import {
   promotionCategoryOptionsSeed,
   promotionMockItemsSeed,
   promotionViewCopySeed,
+  BOOST_PACKAGES_SEED,
+  MOCK_WALLET_BALANCE_SEED,
   type PromotionViewCopy,
+  type BoostPackage,
+  type WalletBalance,
 } from "./promotion.service";
+
+export type { BoostPackage, WalletBalance };
 
 export type PromotionCategory =
   | "Semua Jasa"
@@ -27,7 +33,10 @@ export type PromotionItem = {
   avatarIcon: string;
 };
 
-export type PromotionSubView = { view: "Detail"; id: string } | { view: "Editor" };
+export type PromotionSubView =
+  | { view: "Detail"; id: string }
+  | { view: "Editor" }
+  | { view: "Payment"; boostPackageId: string; postTitle: string };
 
 export type PromotionViewText = PromotionViewCopy;
 
@@ -46,6 +55,8 @@ export const promotionCategoryOptions: PromotionCategory[] = [
 export const promotionViewText: PromotionViewText = promotionViewCopySeed;
 
 export const MOCK_PROMOTIONS: PromotionItem[] = [...promotionMockItemsSeed];
+export const BOOST_PACKAGES: BoostPackage[] = [...BOOST_PACKAGES_SEED];
+export const MOCK_WALLET_BALANCE: WalletBalance = { ...MOCK_WALLET_BALANCE_SEED };
 
 export function resolveInitialPromotionSubView(): PromotionSubView | null {
   if (typeof window === "undefined") {

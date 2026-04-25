@@ -1,14 +1,70 @@
-import ServiceContainer from "./test.service";
-const ContainerData = ServiceContainer();
-// Logika Memproses Data
+import ContainerService from "./test.service";
 
-function LogicContainer1() {
-    // Proseslah Data disini
-    return ContainerData.ServiceContainer1;
+function Instance1() {
+
+    const Container1 = ContainerService().ContainerService1;
+
+    const CPU = (data: any[]) => {
+        return data.map(x => ({
+            ...x,
+            computedAt: Date.now()
+        }));
+    };
+
+    let RAM = {
+        lastFetch: null as number | null
+    };
+
+    const Disk = {
+        save: (key: string, value: any) => {
+            localStorage.setItem(key, JSON.stringify(value));
+        },
+        load: (key: string) => {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : null;
+        }
+    };
+
+    RAM.lastFetch = Date.now();
+    const processed = CPU(Container1);
+    Disk.save("instance1-cache", processed);
+    return {
+        data: processed,
+        RAM
+    };
 }
 
-function LogicContainer2() {
-    return ContainerData.ServiceContainer2;
+function Instance2() {
+    const Container2 = ContainerService().ContainerService2;
+
+    const CPU = (data: any[]) => {
+        return data.map(x => ({
+            ...x,
+            computedAt: Date.now()
+        }));
+    };
+
+    let RAM = {
+        lastFetch: null as number | null
+    };
+
+    const Disk = {
+        save: (key: string, value: any) => {
+            localStorage.setItem(key, JSON.stringify(value));
+        },
+        load: (key: string) => {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : null;
+        }
+    };
+
+    RAM.lastFetch = Date.now();
+    const processed = CPU(Container2);
+    Disk.save("instance2-cache", processed);
+    return {
+        data: processed,
+        RAM
+    };
 }
 
-export {LogicContainer1, LogicContainer2};
+export { Instance1, Instance2 };

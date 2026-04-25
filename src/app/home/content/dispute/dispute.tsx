@@ -19,7 +19,7 @@ import {
   type DisputeSubView,
   type DisputeViewText,
 } from "./dispute";
-import { DisputeUpload } from "./page/dispute-upload";
+import { DisputeDetail } from "./page/dispute-detail";
 import { useRole } from "../../role.context";
 
 function AutoTimerWidget({
@@ -178,9 +178,9 @@ function DisputeComponent() {
   const [subView, setSubView] = useState<DisputeSubView>(null);
   const [filterStatus, setFilterStatus] = useState<DisputeFilterOption>("ALL");
 
-  if (subView?.view === "DisputeUpload") {
+  if (subView?.view === "DisputeDetail") {
     return (
-      <DisputeUpload
+      <DisputeDetail
         disputeId={subView.payload.id}
         onBack={() => setSubView(null)}
       />
@@ -311,7 +311,7 @@ function DisputeComponent() {
                 viewText={disputeViewText}
                 onViewDetail={() =>
                   setSubView({
-                    view: "DisputeUpload",
+                    view: "DisputeDetail",
                     payload: { id: dispute.id },
                   })
                 }

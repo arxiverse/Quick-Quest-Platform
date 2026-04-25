@@ -98,12 +98,13 @@ export const mobileNavItems: HomeNavItem[] = [
   { key: "dashboard", label: "Dashboard", mobileLabel: "Home", iconKey: "home", view: "dashboard" },
   { key: "analysis", label: "Analisis", iconKey: "analysis", view: "analysis" },
   { key: "giver", label: "Giver", iconKey: "switch", view: "giver" },
-  { key: "recent", label: "Riwayat", iconKey: "history", view: "recent" },
+  { key: "promotion", label: "Promosi Jasa", mobileLabel: "Promosi", iconKey: "star", view: "promotion" },
   { key: "chat", label: "Chat", iconKey: "chat", view: "chat" },
 ];
 
 export const mobileShortcutItems: HomeNavItem[] = [
   { key: "runner", label: "Runner", iconKey: "briefcase", view: "runner" },
+  { key: "recent", label: "Riwayat", iconKey: "history", view: "recent" },
   { key: "promotion", label: "Promosi Jasa", iconKey: "star", view: "promotion" },
   { key: "leaderboard", label: "Leaderboard", iconKey: "leaderboard", view: "leaderboard" },
   { key: "element", label: "Element", iconKey: "element", view: "element" },

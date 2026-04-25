@@ -1,5 +1,7 @@
+import { useCallback, useEffect, useState } from "react";
 import {
   RUNNER_SUBVIEW_STORAGE_KEY_SEED,
+  getRunnerDeviceLocationRaw,
   runnerActiveQuests,
   runnerAvailabilitySchedule,
   runnerCareerMetrics,
@@ -10,9 +12,12 @@ import {
   runnerPartyLobbyChatMessages,
   runnerPartyLobbyInfoSeed,
   runnerQuestEscrowFlow,
+  runnerQuestFeedSeed,
   runnerReliabilityBadges,
   runnerSkillInventory,
   runnerViewCopySeed,
+  type RunnerQuestFeedItem,
+  type RunnerRawCoords,
   type RunnerViewCopy,
 } from "./runner.service";
 
@@ -114,14 +119,17 @@ export type RunnerPartyLobbyChatMessage = {
   content: string;
 };
 
-export type RunnerSubView = { view: "PartyLobbyRoom"; payload: { partyId: string } };
+export type RunnerSubView =
+  | { view: "Home" }
+  | { view: "QuestFeed" }
+  | { view: "ActiveQuest" }
+  | { view: "PartyLobbyRoom"; payload: { partyId: string } }
+  | { view: "MapsLive" }
+  | { view: "Insights" };
 
 export type RunnerWorkStatus = "idle" | "started" | "finished";
-
 export type RunnerWorkStateMap = Record<string, RunnerWorkStatus>;
-
 export type RunnerCountdownMap = Record<string, number>;
-
 export type RunnerViewText = RunnerViewCopy;
 
 export const runnerSubViewStorageKey = RUNNER_SUBVIEW_STORAGE_KEY_SEED;
@@ -197,7 +205,9 @@ export function createInitialRunnerCountdown(
   ) as RunnerCountdownMap;
 }
 
-export function tickRunnerCountdown(previous: RunnerCountdownMap): RunnerCountdownMap {
+export function tickRunnerCountdown(
+  previous: RunnerCountdownMap,
+): RunnerCountdownMap {
   return Object.fromEntries(
     Object.entries(previous).map(([key, value]) => [key, Math.max(0, value - 1)]),
   );
@@ -209,7 +219,6 @@ export function formatRunnerCountdown(seconds: number): string {
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const secs = safeSeconds % 60;
   const pad = (value: number) => value.toString().padStart(2, "0");
-
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
 }
 
@@ -231,33 +240,30 @@ export function createRunnerPartySlotFill(
   return Array.from({ length: slotTotal }, (_, index) => index < slotFilled);
 }
 
-export function resolveInitialRunnerSubView(): RunnerSubView | null {
+export function resolveInitialRunnerSubView(): RunnerSubView {
   if (typeof window === "undefined") {
-    return null;
+    return { view: "Home" };
   }
 
   try {
     const raw = window.localStorage.getItem(runnerSubViewStorageKey);
     if (!raw) {
-      return null;
+      return { view: "Home" };
     }
 
-    return JSON.parse(raw) as RunnerSubView;
+    const parsed = JSON.parse(raw) as RunnerSubView;
+    return parsed?.view ? parsed : { view: "Home" };
   } catch {
-    return null;
+    return { view: "Home" };
   }
 }
 
-export function syncRunnerSubViewStorage(subView: RunnerSubView | null): void {
+export function syncRunnerSubViewStorage(subView: RunnerSubView): void {
   if (typeof window === "undefined") {
     return;
   }
 
-  if (subView) {
-    window.localStorage.setItem(runnerSubViewStorageKey, JSON.stringify(subView));
-  } else {
-    window.localStorage.removeItem(runnerSubViewStorageKey);
-  }
+  window.localStorage.setItem(runnerSubViewStorageKey, JSON.stringify(subView));
 }
 
 export function getRunnerPartyLobbyInfo(partyId: string): RunnerPartyLobbyInfo {
@@ -267,17 +273,120 @@ export function getRunnerPartyLobbyInfo(partyId: string): RunnerPartyLobbyInfo {
   );
 }
 
+export function resolveRunnerPartyHeroParty(): RunnerOpenParty | null {
+  return runnerOpenParties[0] ?? null;
+}
+
+export function resolveRunnerFeaturedQuest(): RunnerQuestFeedItem | null {
+  return runnerQuestFeedSeed[0] ?? null;
+}
+
 export {
   runnerAvailabilitySchedule,
+  runnerActiveQuests,
   runnerCareerMetrics,
   runnerEarningTrajectory,
   runnerFocusInsight,
   runnerMembers,
-  runnerReliabilityBadges,
-  runnerSkillInventory,
-  runnerActiveQuests,
   runnerOpenParties,
-  runnerQuestEscrowFlow,
   runnerPartyLobbyChatMessages,
   runnerPartyLobbyInfoSeed,
+  runnerQuestEscrowFlow,
+  runnerQuestFeedSeed,
+  runnerReliabilityBadges,
+  runnerSkillInventory,
 };
+
+export type RunnerMapMarkerRole = "ME_RUNNER" | "QUEST_LIVE" | "HOT_ZONE";
+
+export interface RunnerMapMarker {
+  id: string;
+  position: RunnerRawCoords;
+  role: RunnerMapMarkerRole;
+  title: string;
+  opacity: number;
+}
+
+export function useRunnerMapsLiveVM() {
+  const [markers, setMarkers] = useState<RunnerMapMarker[]>([]);
+  const [center, setCenter] = useState<RunnerRawCoords | null>(null);
+  const [permissionStatus, setPermissionStatus] = useState<
+    "pending" | "granted" | "denied"
+  >("pending");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const generateDynamicPoints = (origin: RunnerRawCoords): RunnerMapMarker[] => {
+    return [
+      {
+        id: "q-live-1",
+        position: { lat: origin.lat + 0.002, lng: origin.lng + 0.001 },
+        role: "QUEST_LIVE",
+        title: "Paket Reguler",
+        opacity: 0.9,
+      },
+      {
+        id: "q-live-2",
+        position: { lat: origin.lat - 0.0015, lng: origin.lng - 0.0025 },
+        role: "QUEST_LIVE",
+        title: "Cleaning",
+        opacity: 0.9,
+      },
+      {
+        id: "hot-zone-1",
+        position: { lat: origin.lat + 0.004, lng: origin.lng - 0.003 },
+        role: "HOT_ZONE",
+        title: "Area Sibuk",
+        opacity: 0.6,
+      },
+    ];
+  };
+
+  const requestLocationAndInitMap = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const myCoords = await getRunnerDeviceLocationRaw();
+      setCenter(myCoords);
+      setPermissionStatus("granted");
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("qqm_maps_active", "true");
+      }
+
+      const allMarkers: RunnerMapMarker[] = [
+        {
+          id: "me",
+          position: myCoords,
+          role: "ME_RUNNER",
+          title: "Lokasi Anda",
+          opacity: 1,
+        },
+        ...generateDynamicPoints(myCoords),
+      ];
+      setMarkers(allMarkers);
+    } catch {
+      setPermissionStatus("denied");
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("qqm_maps_active");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hasMapActive =
+        window.localStorage.getItem("qqm_maps_active") === "true";
+      if (hasMapActive) {
+        void requestLocationAndInitMap();
+      }
+    }
+  }, [requestLocationAndInitMap]);
+
+  return {
+    markers,
+    center,
+    permissionStatus,
+    isLoading,
+    requestLocationAndInitMap,
+  };
+}

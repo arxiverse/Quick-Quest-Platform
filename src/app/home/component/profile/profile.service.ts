@@ -1,4 +1,4 @@
-import GlobalEndpoint, { ApiRequestError, requestJson } from "../../../global.service";
+import GlobalEndpoint, { ApiRequestError, postJson, requestJson } from "../../../global.service";
 import type { BackendUserRole } from "../../role.util";
 
 export type ProfileDetailPayload = {
@@ -6,6 +6,7 @@ export type ProfileDetailPayload = {
   email: string;
   phone: string;
   full_address: string;
+  authorization: string;
   user_role: BackendUserRole;
 };
 
@@ -15,6 +16,71 @@ export type ProfileDetailResponse = {
   data?: ProfileDetailPayload;
 };
 
+export type ProfileVerificationStatus =
+  | "not_started"
+  | "draft"
+  | "submitted"
+  | "document_check"
+  | "face_check"
+  | "risk_review"
+  | "manual_review"
+  | "approved"
+  | "rejected"
+  | "resubmission_required";
+
+export type ProfileVerificationStage =
+  | "identity_form"
+  | "document_upload"
+  | "selfie_check"
+  | "review"
+  | "done";
+
+export type ProfileVerificationDocumentType =
+  | "ktp_front"
+  | "selfie"
+  | "selfie_with_ktp"
+  | "liveness_video";
+
+export type ProfileVerificationGender = "male" | "female" | "other" | "";
+
+export type ProfileVerificationDraft = {
+  fullLegalName: string;
+  nik: string;
+  birthPlace: string;
+  birthDate: string;
+  gender: ProfileVerificationGender;
+  occupation: string;
+  province: string;
+  city: string;
+  district: string;
+  subDistrict: string;
+  postalCode: string;
+  fullAddress: string;
+  domicileSameAsKtp: boolean;
+};
+
+export type ProfileVerificationDocumentDraft = {
+  type: ProfileVerificationDocumentType;
+  label: string;
+  helper: string;
+  required: boolean;
+  fileName: string;
+  uploaded: boolean;
+};
+
+export type ProfileVerificationState = {
+  status: ProfileVerificationStatus;
+  stage: ProfileVerificationStage;
+  trustTier: string;
+  riskBand: string;
+  reviewerNote: string;
+  rejectionReason: string;
+  needsResubmission: boolean;
+  updatedAtLabel: string;
+  draft: ProfileVerificationDraft;
+  documents: ProfileVerificationDocumentDraft[];
+};
+
 export async function getProfileDetailFromApi(): Promise<ProfileDetailPayload> {
   const endpoints = GlobalEndpoint();
   const response = await requestJson<ProfileDetailResponse>(endpoints.profile.detail, {
@@ -22,11 +88,7 @@ export async function getProfileDetailFromApi(): Promise<ProfileDetailPayload> {
     credentials: "include",
   });
 
-  if (!response.success || !response.data) {
-    throw new ApiRequestError(response.message || "Data profile dari backend tidak valid.", 502);
-  }
-
-  return response.data;
+  return requireApiData(response, "Data profile dari backend tidak valid.");
 }
 
 export function getProfileServiceErrorStatus(error: unknown): number | null {
@@ -40,6 +102,301 @@ export function getProfileServiceErrorMessage(error: unknown, fallbackMessage: s
 
   return fallbackMessage;
 }
+
+// ---- Verification API Contracts (from Codex backend) ----
+
+export type VerificationApiDocument = {
+  id: string;
+  document_type: string;
+  file_key: string;
+  file_url: string;
+  mime_type: string;
+  file_size: number | null;
+  document_number: string;
+  ocr_name: string;
+  ocr_nik: string;
+  ocr_birth_date: string | null;
+  ocr_address: string;
+  ocr_confidence: number | null;
+  is_primary: boolean;
+  validation_status: string;
+  uploaded_at: string | null;
+  validated_at: string | null;
+};
+
+export type VerificationApiResponse = {
+  verification_profile_id: string;
+  auth_user_id: string;
+  full_legal_name: string;
+  nik: string;
+  birth_place: string;
+  birth_date: string | null;
+  gender: string;
+  occupation: string;
+  province: string;
+  city: string;
+  district: string;
+  sub_district: string;
+  postal_code: string;
+  full_address: string;
+  domicile_same_as_ktp: boolean;
+  verification_status: string;
+  verification_stage: string;
+  risk_score: number | null;
+  risk_flags: string[] | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  rejection_reason_code: string;
+  rejection_reason_detail: string;
+  needs_resubmission: boolean;
+  user_role: string;
+  can_post_quest: boolean;
+  trust_tier: string;
+  risk_band: string;
+  latest_review_note: string;
+  documents: VerificationApiDocument[];
+};
+
+export type VerificationApiWrapped = {
+  success: boolean;
+  message: string;
+  data?: VerificationApiResponse;
+};
+
+export type VerificationDraftBody = {
+  full_legal_name?: string;
+  nik?: string;
+  birth_place?: string;
+  birth_date?: string;
+  gender?: string;
+  occupation?: string;
+  province?: string;
+  city?: string;
+  district?: string;
+  sub_district?: string;
+  postal_code?: string;
+  full_address?: string;
+  domicile_same_as_ktp?: boolean;
+};
+
+export type VerificationDocumentBody = {
+  document_type: string;
+  file_key: string;
+  file_url?: string;
+  mime_type?: string;
+  file_size?: number;
+  document_number?: string;
+  ocr_name?: string;
+  ocr_nik?: string;
+  ocr_birth_date?: string;
+  ocr_address?: string;
+  ocr_confidence?: number;
+  is_primary?: boolean;
+  validation_status?: string;
+};
+
+export type VerificationHistoryApiResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    reviews: Array<{
+      id: string;
+      review_type: string;
+      review_result: string;
+      reviewer_id: string | null;
+      reviewer_role: string;
+      review_notes: string;
+      decision_reason_code: string;
+      decision_reason_detail: string;
+      created_at: string | null;
+    }>;
+    events: Array<{
+      id: string;
+      previous_status: string;
+      new_status: string;
+      actor_id: string | null;
+      actor_type: string;
+      notes: string;
+      created_at: string | null;
+    }>;
+  };
+};
+
+function requireApiData<TWrapped extends { success: boolean; message: string; data?: TData }, TData>(
+  response: TWrapped,
+  fallbackMessage: string,
+): TData {
+  if (!response.success || !response.data) {
+    throw new ApiRequestError(response.message || fallbackMessage, 500);
+  }
+
+  return response.data;
+}
+
+export async function fetchVerificationFromApi(): Promise<VerificationApiResponse> {
+  const endpoints = GlobalEndpoint();
+  const response = await requestJson<VerificationApiWrapped>(
+    endpoints.profile.verification.detail,
+    { method: "GET", credentials: "include" },
+  );
+  return requireApiData(response, "Data verification tidak valid dari backend.");
+}
+
+export async function saveDraftToApi(body: VerificationDraftBody): Promise<VerificationApiResponse> {
+  const endpoints = GlobalEndpoint();
+  const response = await postJson<VerificationDraftBody, VerificationApiWrapped>(
+    endpoints.profile.verification.draft,
+    body,
+  );
+  return requireApiData(response, "Gagal menyimpan draft verification.");
+}
+
+export async function saveDocumentToApi(
+  body: VerificationDocumentBody,
+): Promise<VerificationApiResponse> {
+  const endpoints = GlobalEndpoint();
+  const response = await postJson<VerificationDocumentBody, VerificationApiWrapped>(
+    endpoints.profile.verification.documents,
+    body,
+  );
+  return requireApiData(response, "Gagal menyimpan dokumen verification.");
+}
+
+export async function submitVerificationToApi(): Promise<VerificationApiResponse> {
+  const endpoints = GlobalEndpoint();
+  const response = await postJson<Record<string, never>, VerificationApiWrapped>(
+    endpoints.profile.verification.submit,
+    {},
+  );
+  return requireApiData(response, "Gagal submit verification.");
+}
+
+export async function resubmitVerificationToApi(): Promise<VerificationApiResponse> {
+  const endpoints = GlobalEndpoint();
+  const response = await postJson<Record<string, never>, VerificationApiWrapped>(
+    endpoints.profile.verification.resubmit,
+    {},
+  );
+  return requireApiData(response, "Gagal resubmit verification.");
+}
+
+export async function fetchVerificationHistoryFromApi() {
+  const endpoints = GlobalEndpoint();
+  const response = await requestJson<VerificationHistoryApiResponse>(
+    endpoints.profile.verification.history,
+    { method: "GET", credentials: "include" },
+  );
+  return requireApiData(response, "Gagal mengambil history verification.");
+}
+
+export const profileVerificationStageFlowSeed = [
+  {
+    key: "identity_form",
+    label: "Identitas",
+    description: "Isi data legal sesuai identitas resmi.",
+  },
+  {
+    key: "document_upload",
+    label: "Dokumen",
+    description: "Upload KTP dan bukti pendukung verifikasi.",
+  },
+  {
+    key: "selfie_check",
+    label: "Selfie Check",
+    description: "Lengkapi selfie dan selfie sambil pegang KTP.",
+  },
+  {
+    key: "review",
+    label: "Review",
+    description: "Backend dan tim compliance mengecek kelayakan.",
+  },
+  {
+    key: "done",
+    label: "Unlocked",
+    description: "Role siap naik ke user_unlocked saat approved.",
+  },
+] as const satisfies ReadonlyArray<{
+  key: ProfileVerificationStage;
+  label: string;
+  description: string;
+}>;
+
+export const profileVerificationDocumentSeed = [
+  {
+    type: "ktp_front",
+    label: "Foto KTP Bagian Depan",
+    helper: "Pastikan teks KTP terbaca dan tidak blur.",
+    required: true,
+    fileName: "",
+    uploaded: false,
+  },
+  {
+    type: "selfie",
+    label: "Selfie Wajah",
+    helper: "Pakai cahaya yang cukup dan wajah terlihat jelas.",
+    required: true,
+    fileName: "",
+    uploaded: false,
+  },
+  {
+    type: "selfie_with_ktp",
+    label: "Selfie Sambil Memegang KTP",
+    helper: "Wajah dan KTP harus terlihat dalam satu frame.",
+    required: true,
+    fileName: "",
+    uploaded: false,
+  },
+  {
+    type: "liveness_video",
+    label: "Video Liveness",
+    helper: "Masih opsional untuk FE seed, tapi sudah disiapkan tempatnya.",
+    required: false,
+    fileName: "",
+    uploaded: false,
+  },
+] as const satisfies ReadonlyArray<ProfileVerificationDocumentDraft>;
+
+export const profileVerificationSeed: ProfileVerificationState = {
+  status: "not_started",
+  stage: "identity_form",
+  trustTier: "Tier Pending",
+  riskBand: "Belum Dinilai",
+  reviewerNote: "Lengkapi identitas asli untuk membuka akses giver.",
+  rejectionReason: "",
+  needsResubmission: false,
+  updatedAtLabel: "Belum pernah disubmit",
+  draft: {
+    fullLegalName: "",
+    nik: "",
+    birthPlace: "",
+    birthDate: "",
+    gender: "",
+    occupation: "",
+    province: "",
+    city: "",
+    district: "",
+    subDistrict: "",
+    postalCode: "",
+    fullAddress: "",
+    domicileSameAsKtp: true,
+  },
+  documents: profileVerificationDocumentSeed.map((item) => ({ ...item })),
+};
+
+export const profileVerificationCopySeed = {
+  ctaStart: "Mulai Verifikasi",
+  ctaContinue: "Lanjutkan Verifikasi",
+  ctaReview: "Lihat Status Review",
+  ctaUnlocked: "Detail Verifikasi",
+  pendingLabel: "Butuh Verifikasi Identitas",
+  progressLabel: "Verifikasi Sedang Diproses",
+  unlockedLabel: "Identity Unlocked",
+  rejectedLabel: "Perlu Resubmisi",
+  helper:
+    "Lengkapi verifikasi identitas di Profile agar backend nanti bisa meng-upgrade role menjadi user_unlocked.",
+} as const;
 
 export const profileStatsSeed = [
   {
@@ -81,11 +438,11 @@ export const profileStatsSeed = [
 ] as const;
 
 export const verificationLayerSeed = {
-  kycStatus: "Verified",
-  verifiedBadge: "QQM Verified Identity",
-  trustTier: "Tier A",
-  riskBand: "Low Risk",
-  lastReview: "12 Apr 2026",
+  kycStatus: "Belum Diverifikasi",
+  verifiedBadge: "Pending Identity Review",
+  trustTier: "Tier Pending",
+  riskBand: "Belum Dinilai",
+  lastReview: "Belum ada review",
 } as const;
 
 export const profileSkillBreakdownSeed = [

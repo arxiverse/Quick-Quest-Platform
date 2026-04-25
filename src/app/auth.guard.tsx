@@ -1,23 +1,42 @@
-﻿import type { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { getValidAuthSession } from "./auth.guard";
+import { useEffect, type ReactNode } from "react";
+import { useRoute } from "./route.context";
+import { useAuth } from "./auth.context";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  const location = useLocation();
-  const session = getValidAuthSession();
+  const { navigate } = useRoute();
+  const { isAuthenticated, isAuthReady } = useAuth();
 
-  if (!session) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  useEffect(() => {
+    if (!isAuthReady) {
+      return;
+    }
+    if (!isAuthenticated) {
+      navigate("login");
+    }
+  }, [isAuthenticated, isAuthReady, navigate]);
+
+  if (!isAuthReady || !isAuthenticated) {
+    return null;
   }
 
   return <>{children}</>;
 }
 
 export function GuestGuard({ children }: { children: ReactNode }) {
-  const session = getValidAuthSession();
+  const { navigate } = useRoute();
+  const { isAuthenticated, isAuthReady } = useAuth();
 
-  if (session) {
-    return <Navigate to="/home" replace />;
+  useEffect(() => {
+    if (!isAuthReady) {
+      return;
+    }
+    if (isAuthenticated) {
+      navigate("home");
+    }
+  }, [isAuthenticated, isAuthReady, navigate]);
+
+  if (!isAuthReady || isAuthenticated) {
+    return null;
   }
 
   return <>{children}</>;

@@ -52,6 +52,14 @@ export type RegisterViewCopy = {
   loginLinkLabel: string;
 };
 
+function requireRegisterData(response: RegisterResponse): RegisterResponse["data"] {
+  if (!response.success || !response.data?.user?.id) {
+    throw new ApiRequestError(response.message || "Response register tidak valid dari backend.", 500);
+  }
+
+  return response.data;
+}
+
 export const REGISTER_DUMMY_OTP_CODE = "123456";
 
 export const registerSocialItemsSeed: AuthSocialItem[] = [
@@ -195,7 +203,9 @@ export async function registerUser(payload: RegisterRequestPayload): Promise<Reg
   const endpoints = GlobalEndpoint();
 
   try {
-    return await postJson<RegisterRequestPayload, RegisterResponse>(endpoints.auth.register, payload);
+    const response = await postJson<RegisterRequestPayload, RegisterResponse>(endpoints.auth.register, payload);
+    requireRegisterData(response);
+    return response;
   } catch (error) {
     if (error instanceof ApiRequestError) {
       throw error;

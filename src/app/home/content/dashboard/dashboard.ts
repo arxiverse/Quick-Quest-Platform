@@ -127,10 +127,28 @@ export type DashboardGeoScopeItem = {
 
 export type DashboardLiveFilterState = Record<DashboardFilterKey, string>;
 
-export type DashboardSubView = {
-  view: "QuestDetail";
-  payload: { id: string };
-};
+export type DashboardSubView =
+  | { view: "QuestDetail"; payload: { id: string } }
+  | { view: "RunnerImpactDetail" }
+  | { view: "GiverBroadcastImpact" }
+  | { view: "RunnerSnapshootDetail" }
+  | { view: "GiverSnapshootDetail" }
+  | { view: "RunnerMetricsDetail" }
+  | { view: "GiverMetricsDetail" }
+  | { view: "RunnerActiveQuestDetail" }
+  | { view: "RunnerOnlineRunnerDetail" }
+  | { view: "RunnerAvgResponseDetail" }
+  | { view: "RunnerOpenIssueDetail" }
+  | { view: "GiverBroadcastQuestDetail" }
+  | { view: "GiverFillRateDetail" }
+  | { view: "GiverMatchAvgDetail" }
+  | { view: "GiverEscrowLockedDetail" }
+  | { view: "RunnerRecentActivity" }
+  | { view: "RunnerStateDetail" }
+  | { view: "GiverActivityDetail" }
+  | { view: "GiverStateDetail" }
+  | { view: "RunnerMapsLiveDetail" }
+  | { view: "GiverMapsLiveDetail" };
 
 export type DashboardViewText = DashboardViewCopy;
 export type DashboardRoleContext = RoleMode;

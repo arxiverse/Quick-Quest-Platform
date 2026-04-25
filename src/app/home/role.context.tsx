@@ -7,7 +7,9 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { initRoleFromSystem } from "./role";
+import { useRoute } from "../route.context";
+import { useAuth } from "../auth.context";
+import { initRoleFromProfile } from "./role";
 import {
   normalizeBackendUserRole,
   type BackendUserRole,
@@ -27,6 +29,8 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
+  const { navigate } = useRoute();
+  const { userProfile, logoutClient } = useAuth();
   const [role, setRole] = useState<RoleMode>("runner");
   const [backendUserRole, setBackendUserRole] =
     useState<BackendUserRole>("user_runner");
@@ -36,20 +40,24 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    async function initializeRole() {
-      const result = await initRoleFromSystem();
+    function initializeRole() {
+      const result = initRoleFromProfile(userProfile);
       if (!isMounted) return;
 
       if (result.shouldForceLogout) {
-        if (window.location.pathname !== "/login") {
-          window.location.replace("/login");
-          return;
-        }
+        logoutClient();
+        navigate("login");
         setIsRoleReady(true);
         return;
       }
 
-      setRole(result.role);
+      const savedRole = localStorage.getItem("qqm-active-role");
+      let initialRole = result.role; // Default is "runner"
+      if (savedRole === "giver" && result.isGiverVerified) {
+        initialRole = "giver";
+      }
+
+      setRole(initialRole);
       setBackendUserRole(result.backendUserRole);
       setIsGiverVerified(result.isGiverVerified);
       setIsRoleReady(true);
@@ -66,6 +74,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       return;
     }
     setRole(newRole);
+    localStorage.setItem("qqm-active-role", newRole);
     window.dispatchEvent(new Event("qqm-role-update"));
   }, [isGiverVerified]);
 
@@ -83,6 +92,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     setIsGiverVerified(unlocked);
     if (!unlocked || role !== "giver") {
       setRole("runner");
+      localStorage.setItem("qqm-active-role", "runner");
     }
     window.dispatchEvent(new Event("qqm-role-update"));
   }, [role]);

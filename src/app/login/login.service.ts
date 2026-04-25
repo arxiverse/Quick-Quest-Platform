@@ -3,6 +3,7 @@ import GoogleLogo from "../../assets/svg/google-logo.svg";
 import WhatsappLogo from "../../assets/svg/whatsapp-logo.svg";
 import LinkedinLogo from "../../assets/svg/linkedin-logo.svg";
 import type { AuthSocialItem, LoginField } from "./login";
+import type { RoleInitPayload } from "../home/role.service";
 
 export type LoginRequestPayload = {
   identity: string;
@@ -18,6 +19,9 @@ export type LoginSessionPayload = {
     id?: string;
     username?: string;
     email?: string;
+    phone?: string;
+    fullname?: string;
+    full_address?: string;
     user_role?: string;
   };
 };
@@ -43,6 +47,14 @@ export type LoginViewCopy = {
   registerPrefixLabel: string;
   registerLinkLabel: string;
 };
+
+function requireLoginSession(response: LoginResponse): LoginResponse["data"] {
+  if (!response.success || !response.data?.session) {
+    throw new ApiRequestError(response.message || "Session login tidak valid dari backend.", 500);
+  }
+
+  return response.data;
+}
 
 export const loginFieldsSeed: LoginField[] = [
   {
@@ -92,6 +104,22 @@ export function normalizeLoginPayload(identity: string, password: string): Login
   };
 }
 
+export function mapLoginResponseToRoleInitPayload(response: LoginResponse): RoleInitPayload {
+  const sessionUser = response.data?.session?.user;
+  const userRole = sessionUser?.user_role ?? response.data?.user_role ?? "user_runner";
+  const authorization = response.data?.authorization?.trim() || "user";
+
+  return {
+    id: sessionUser?.id ?? "",
+    user_role: userRole as RoleInitPayload["user_role"],
+    authorization,
+    fullname: sessionUser?.fullname ?? "",
+    email: sessionUser?.email ?? "",
+    phone: sessionUser?.phone ?? "",
+    full_address: sessionUser?.full_address ?? "",
+  };
+}
+
 export async function loginWithCredentials(identity: string, password: string): Promise<LoginResponse> {
   const payload = normalizeLoginPayload(identity, password);
 
@@ -102,7 +130,9 @@ export async function loginWithCredentials(identity: string, password: string): 
   const endpoints = GlobalEndpoint();
 
   try {
-    return await postJson<LoginRequestPayload, LoginResponse>(endpoints.auth.login, payload);
+    const response = await postJson<LoginRequestPayload, LoginResponse>(endpoints.auth.login, payload);
+    requireLoginSession(response);
+    return response;
   } catch (error) {
     if (error instanceof ApiRequestError) {
       throw error;

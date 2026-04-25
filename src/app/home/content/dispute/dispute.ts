@@ -21,6 +21,7 @@ export type DisputeStatus =
   | "UNDER_REVIEW"
   | "RESOLVED_RUNNER"
   | "RESOLVED_GIVER"
+  | "RESOLVED_PARTIAL"
   | "DISMISSED";
 
 export type DisputeParty = "GIVER" | "RUNNER";
@@ -48,6 +49,13 @@ export type DisputeItem = {
   runnerEvidence: DisputeEvidence[];
   mediatorNote?: string;
   resolvedAt?: string;
+  timeline: DisputeTimelineEvent[];
+};
+
+export type DisputeTimelineEvent = {
+  status: DisputeStatus;
+  time: string;
+  description: string;
 };
 
 export type DisputeLayer =
@@ -57,7 +65,7 @@ export type DisputeLayer =
 
 export type DisputeFilterOption = (typeof DISPUTE_FILTER_OPTIONS_SEED)[number];
 
-export type DisputeSubView = { view: "DisputeUpload"; payload: { id: string } } | null;
+export type DisputeSubView = { view: "DisputeDetail"; payload: { id: string } } | null;
 
 export type DisputeStatCard = {
   key: "active" | "resolved" | "total";
@@ -141,7 +149,12 @@ export function filterDisputeItems(
   if (filter === "ALL") {
     return items;
   }
-  return items.filter((item) => item.status === filter);
+  return items.filter((item) => {
+    if (filter === "RESOLVED_RUNNER") {
+      return item.status.startsWith("RESOLVED_");
+    }
+    return item.status === filter;
+  });
 }
 
 export function buildDisputeStatCards(items: DisputeItem[], viewText: DisputeViewText): DisputeStatCard[] {
@@ -149,7 +162,7 @@ export function buildDisputeStatCards(items: DisputeItem[], viewText: DisputeVie
     ["AUTO_TIMER", "EVIDENCE_SUBMISSION", "UNDER_REVIEW"].includes(item.status),
   ).length;
   const resolved = items.filter((item) =>
-    ["RESOLVED_RUNNER", "RESOLVED_GIVER"].includes(item.status),
+    ["RESOLVED_RUNNER", "RESOLVED_GIVER", "RESOLVED_PARTIAL"].includes(item.status),
   ).length;
   const total = items.length;
 

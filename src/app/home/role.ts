@@ -1,10 +1,8 @@
 // role.ts — Layer Logika Bisnis (Angular-like)
 // Tugas: Inisialisasi role berbasis backend (cookie session + /api/profile).
 
-import { ApiRequestError } from "../global.service";
-import { clearAuthSession, getValidAuthSession } from "../auth.guard";
-import { fetchRoleInitData } from "./role.service";
 import { normalizeBackendUserRole, type BackendUserRole, type RoleMode } from "./role.util";
+import type { RoleInitPayload } from "./role.service";
 
 export type RoleInitResult = {
   role: RoleMode;
@@ -19,51 +17,29 @@ export type RoleInitResult = {
   };
 };
 
-export async function initRoleFromSystem(): Promise<RoleInitResult> {
-  const session = getValidAuthSession();
-  if (!session) {
-    clearAuthSession();
+export function initRoleFromProfile(payload: RoleInitPayload | null): RoleInitResult {
+  if (!payload) {
     return {
       role: "runner",
       isGiverVerified: false,
       backendUserRole: "user_runner",
-      shouldForceLogout: false,
+      shouldForceLogout: true,
     };
   }
 
-  try {
-    const payload = await fetchRoleInitData();
-    const backendUserRole = normalizeBackendUserRole(payload.user_role);
-    const isUnlocked = backendUserRole === "user_unlocked";
+  const backendUserRole = normalizeBackendUserRole(payload.user_role);
+  const isUnlocked = backendUserRole === "user_unlocked";
 
-    return {
-      role: "runner",
-      isGiverVerified: isUnlocked,
-      backendUserRole,
-      shouldForceLogout: false,
-      profileData: {
-        fullname: payload.fullname,
-        email: payload.email,
-        phone: payload.phone,
-        full_address: payload.full_address,
-      },
-    };
-  } catch (error) {
-    if (error instanceof ApiRequestError && error.statusCode === 401) {
-      clearAuthSession();
-      return {
-        role: "runner",
-        isGiverVerified: false,
-        backendUserRole: "user_runner",
-        shouldForceLogout: true,
-      };
-    }
-
-    return {
-      role: "runner",
-      isGiverVerified: false,
-      backendUserRole: "user_runner",
-      shouldForceLogout: false,
-    };
-  }
+  return {
+    role: "runner",
+    isGiverVerified: isUnlocked,
+    backendUserRole,
+    shouldForceLogout: false,
+    profileData: {
+      fullname: payload.fullname,
+      email: payload.email,
+      phone: payload.phone,
+      full_address: payload.full_address,
+    },
+  };
 }
