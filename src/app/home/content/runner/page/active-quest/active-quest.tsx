@@ -13,6 +13,8 @@ import {
   startRunnerActiveQuestLive,
   tickRunnerCountdown,
 } from "./active-quest";
+import RatingModal from "../../../../component/rating/rating-modal.tsx";
+import type { RatingTarget } from "../../../../component/rating/rating-modal";
 
 export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
   const [quests, setQuests] = useState(() => getRunnerActiveQuestSeed().quests);
@@ -25,6 +27,7 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
   );
   const [actionQuestId, setActionQuestId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -188,7 +191,16 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
                   onClick={() => {
                     setActionQuestId(quest.id);
                     finishRunnerActiveQuestLive(quest.id)
-                      .then(() => setWorkState((prev) => ({ ...prev, [quest.id]: "finished" })))
+                      .then(() => {
+                        setWorkState((prev) => ({ ...prev, [quest.id]: "finished" }));
+                        // Trigger rating modal — runner rates the giver
+                        setRatingTarget({
+                          name: quest.giverName,
+                          role: "giver",
+                          questTitle: quest.questTitle,
+                          questId: quest.id,
+                        });
+                      })
                       .catch((error) =>
                         setErrorMessage(error instanceof Error ? error.message : "Gagal selesai kerja."),
                       )
@@ -203,6 +215,15 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
           );
         })}
       </div>
+
+      {/* Rating Modal — muncul setelah runner selesai kerja */}
+      {ratingTarget && (
+        <RatingModal
+          isOpen={true}
+          target={ratingTarget}
+          onClose={() => setRatingTarget(null)}
+        />
+      )}
     </div>
   );
 }

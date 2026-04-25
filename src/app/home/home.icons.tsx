@@ -96,13 +96,14 @@ export function UserIcon({ className }: HomeIconProps) {
   );
 }
 
-export function ElementIcon({ className }: HomeIconProps) {
+export function PerformanceIcon({ className }: HomeIconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <rect x="4" y="4" width="7" height="7" rx="1.5" />
-      <rect x="13" y="4" width="7" height="7" rx="1.5" />
-      <rect x="4" y="13" width="7" height="7" rx="1.5" />
-      <rect x="13" y="13" width="7" height="7" rx="1.5" />
+      <path d="M6 3H18V11C18 14.31 15.31 17 12 17C8.69 17 6 14.31 6 11V3Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 7H3C3 9.76 4.9 12.06 7.5 12.7" strokeLinecap="round" />
+      <path d="M18 7H21C21 9.76 19.1 12.06 16.5 12.7" strokeLinecap="round" />
+      <path d="M12 17V21" strokeLinecap="round" />
+      <path d="M8 21H16" strokeLinecap="round" />
     </svg>
   );
 }
@@ -206,7 +207,7 @@ export const homeIconRegistry: Record<HomeIconKey, ComponentType<HomeIconProps>>
   switch: SwitchIcon,
   logout: LogoutIcon,
   user: UserIcon,
-  element: ElementIcon,
+  performance: PerformanceIcon,
   search: SearchIcon,
   filter: FilterIcon,
   chevronDown: ChevronDownIcon,

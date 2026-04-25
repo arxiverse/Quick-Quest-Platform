@@ -7,7 +7,7 @@ export const homeViews = [
   "chat",
   "giver",
   "dispute",
-  "element",
+  "performance",
   "profile",
   "promotion",
 ] as const;
@@ -28,7 +28,7 @@ export type HomeIconKey =
   | "switch"
   | "logout"
   | "user"
-  | "element"
+  | "performance"
   | "search"
   | "filter"
   | "chevronDown"

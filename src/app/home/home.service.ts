@@ -55,11 +55,11 @@ export const homeViewMetaMap: Record<HomeView, HomeViewMeta> = {
     description: "Area buat ngerapihin brief, budget, prioritas, dan distribusi request ke runner.",
     searchPlaceholder: "Cari campaign atau brief",
   },
-  element: {
-    eyebrow: "Element",
-    title: "Playground UI yang padat, rapi, dan siap dipinjam ke halaman lain.",
-    description: "Tempat kita nampung elemen dashboard ala TailAdmin dan density ala AdminOne sebelum disebar ke fitur utama.",
-    searchPlaceholder: "Cari component, chart, atau pattern UI",
+  performance: {
+    eyebrow: "Performance",
+    title: "Pantau poin, rating, dan skill PP kamu.",
+    description: "Lihat total PP, tier, riwayat rating, dan breakdown skill dari semua quest yang sudah kamu selesaikan.",
+    searchPlaceholder: "Cari skill, rating, atau quest",
   },
   profile: {
     eyebrow: "Profil",
@@ -91,7 +91,7 @@ export const desktopNavItems: HomeNavItem[] = [
   { key: "chat", label: "Chat", iconKey: "chat", view: "chat" },
   { key: "giver", label: "Giver", iconKey: "switch", view: "giver" },
   { key: "dispute", label: "Dispute", iconKey: "shield", view: "dispute" },
-  { key: "element", label: "Element", iconKey: "element", view: "element" },
+  { key: "performance", label: "Performance", iconKey: "performance", view: "performance" },
 ];
 
 export const mobileNavItems: HomeNavItem[] = [
@@ -107,7 +107,7 @@ export const mobileShortcutItems: HomeNavItem[] = [
   { key: "recent", label: "Riwayat", iconKey: "history", view: "recent" },
   { key: "promotion", label: "Promosi Jasa", iconKey: "star", view: "promotion" },
   { key: "leaderboard", label: "Leaderboard", iconKey: "leaderboard", view: "leaderboard" },
-  { key: "element", label: "Element", iconKey: "element", view: "element" },
+  { key: "performance", label: "Performance", iconKey: "performance", view: "performance" },
   { key: "profile-shortcut", label: "Profile", iconKey: "user", view: "profile" },
 ];
 

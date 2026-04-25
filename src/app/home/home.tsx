@@ -18,7 +18,7 @@ import LeaderboardComponent from "./content/leaderboard/leaderboard.tsx";
 import ChatComponent from "./content/chat/chat.tsx";
 import GiverComponent from "./content/giver/giver.tsx";
 import DisputeComponent from "./content/dispute/dispute.tsx";
-import ElementComponent from "./content/element/element.tsx";
+import PerformanceComponent from "./content/performance/performance.tsx";
 import PromotionComponent from "./content/promotion/promotion.tsx";
 import { homeIconRegistry } from "./home.icons";
 import {
@@ -49,7 +49,7 @@ const contentRegistry: Record<HomeView, ContentComponent> = {
   chat: ChatComponent,
   giver: GiverComponent,
   dispute: DisputeComponent,
-  element: ElementComponent,
+  performance: PerformanceComponent,
   promotion: PromotionComponent,
   profile: () => <ProfileContent profile={homeProfile} />,
 };

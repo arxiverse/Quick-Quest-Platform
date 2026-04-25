@@ -34,6 +34,8 @@ import { QuestEditor } from "./page/quest-editor";
 import { CandidateReview } from "./page/candidate-review";
 import BorderGlow from "../../../../Animation/BorderGlow";
 import { useAnimationTheme } from "../../../global.theme";
+import RatingModal from "../../component/rating/rating-modal.tsx";
+import type { RatingTarget } from "../../component/rating/rating-modal";
 
 function PartyLobbyWidget({
   slotFilled,
@@ -111,6 +113,7 @@ function GiverComponent() {
   const [subView, setSubView] = useState<GiverSubView | null>(resolveInitialGiverSubView);
   const { animationsEnabled } = useAnimationTheme();
   const dashboardVM = useGiverDashboardVM();
+  const [ratingTarget, setRatingTarget] = useState<RatingTarget | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -270,7 +273,17 @@ function GiverComponent() {
                         <button
                           type="button"
                           disabled={dashboardVM.auditActionId === assignment.id}
-                          onClick={() => void dashboardVM.auditAssignment(assignment.id, "accept")}
+                          onClick={() => {
+                            void dashboardVM.auditAssignment(assignment.id, "accept").then(() => {
+                              // Trigger rating modal — giver rates the runner
+                              setRatingTarget({
+                                name: assignment.runnerName,
+                                role: "runner",
+                                questTitle: quest.title,
+                                questId: quest.id,
+                              });
+                            });
+                          }}
                           className="btn h-8 min-h-8 rounded-[8px] border-none bg-success px-3 text-[11px] font-bold text-success-content"
                         >
                           Terima
@@ -494,6 +507,15 @@ function GiverComponent() {
           </div>
         </Surface>
       </div>
+
+      {/* Rating Modal — muncul setelah giver terima hasil kerja runner */}
+      {ratingTarget && (
+        <RatingModal
+          isOpen={true}
+          target={ratingTarget}
+          onClose={() => setRatingTarget(null)}
+        />
+      )}
     </div>
   );
 }
