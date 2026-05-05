@@ -72,6 +72,10 @@ const ENDPOINTS = {
   giverQuest: {
     list: joinApiUrl(API_BASE_URLS.stream, "/api/giver/quests"),
     create: joinApiUrl(API_BASE_URLS.stream, "/api/giver/quests"),
+    update: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/quests/${questId}`),
+    remove: (questId: string) =>
+      joinApiUrl(API_BASE_URLS.stream, `/api/giver/quests/${questId}`),
     lockEscrow: (questId: string) =>
       joinApiUrl(API_BASE_URLS.stream, `/api/giver/quests/${questId}/escrow/lock`),
     publish: (questId: string) =>

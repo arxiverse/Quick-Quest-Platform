@@ -477,8 +477,10 @@ type ApiQuestCapacity = {
 };
 
 export type ApiGiverQuest = {
-  id: string;
+  id?: string;
+  quest_id?: string;
   title: string;
+  description?: string;
   category?: string;
   mode?: string;
   status?: string;
@@ -486,6 +488,16 @@ export type ApiGiverQuest = {
   reward_amount?: string;
   reward_currency?: string;
   reward_display?: string;
+  current_runner_count?: number | string | null;
+  max_runner?: number | string | null;
+  province?: string;
+  city?: string;
+  district?: string;
+  sub_district?: string;
+  full_address?: string;
+  postal_code?: string;
+  lat?: number | string | null;
+  lng?: number | string | null;
   location?: ApiQuestLocation;
   capacity?: ApiQuestCapacity;
   escrow?: {
@@ -527,6 +539,11 @@ export type CreateGiverQuestApiPayload = {
   base_radius_km: number;
 };
 
+type DeleteGiverQuestApiResponse = {
+  quest_id: string;
+  deleted: boolean;
+};
+
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
@@ -544,6 +561,10 @@ function formatCurrencyDisplay(value: unknown): string {
   const amount = toNumber(value);
   if (!amount) return "Rp0";
   return `Rp${amount.toLocaleString("id-ID")}`;
+}
+
+function normalizeGiverQuestId(quest: ApiGiverQuest): string {
+  return (quest.id || quest.quest_id || "").trim();
 }
 
 function mapGiverStatus(status?: string): GiverBroadcastQuest["status"] {
@@ -593,23 +614,41 @@ function resolveElapsedSeconds(createdAt?: string | null, publishedAt?: string |
 }
 
 export function mapGiverQuestFromApi(quest: ApiGiverQuest): GiverBroadcastQuest {
-  const currentRunnerCount = toNumber(quest.capacity?.current_runner_count);
-  const maxRunner = Math.max(1, toNumber(quest.capacity?.max_runner, 1));
+  const questId = normalizeGiverQuestId(quest);
+  const currentRunnerCount = toNumber(
+    quest.capacity?.current_runner_count ?? quest.current_runner_count,
+  );
+  const maxRunner = Math.max(1, toNumber(quest.capacity?.max_runner ?? quest.max_runner, 1));
+  const fullAddress = quest.location?.full_address || quest.full_address || "";
   const location =
     quest.location?.label ||
     quest.location?.sub_district ||
+    quest.sub_district ||
     quest.location?.district ||
+    quest.district ||
     quest.location?.city ||
+    quest.city ||
     quest.location?.full_address ||
+    quest.full_address ||
     "Lokasi belum diisi";
+  const rewardAmount = toNumber(quest.reward_amount);
+  const lifecycleStatus = (quest.status ?? "").toLowerCase();
+  const skillTags = asArray<string>(quest.skill_tags);
 
   return {
-    id: quest.id,
+    id: questId,
     title: quest.title || "Untitled Quest",
+    description: quest.description || "",
+    category: quest.category || "General",
     status: mapGiverStatus(quest.status),
+    lifecycleStatus,
+    isPrivateDraft: lifecycleStatus === "draft",
     mode: mapGiverMode(quest.mode),
-    skillTag: asArray<string>(quest.skill_tags).join(" + ") || quest.category || "General",
+    modeValue: (quest.mode ?? "").toLowerCase() === "group" ? "group" : "solo",
+    skillTags,
+    skillTag: skillTags.join(" + ") || quest.category || "General",
     wageBand: quest.reward_display || formatCurrencyDisplay(quest.reward_amount),
+    rewardAmount,
     slotFilled: currentRunnerCount,
     slotTotal: maxRunner,
     baseRadiusKm: 1,
@@ -617,6 +656,7 @@ export function mapGiverQuestFromApi(quest: ApiGiverQuest): GiverBroadcastQuest 
     elapsedSeedSeconds: resolveElapsedSeconds(quest.created_at, quest.published_at),
     deadline: quest.ends_at ? new Date(quest.ends_at).toLocaleString("id-ID") : "Belum dijadwalkan",
     location,
+    fullAddress,
     estimatedCandidates: Math.max(1, 24 - currentRunnerCount),
     escrowState: mapGiverEscrowState(quest.escrow?.escrow_state),
   };
@@ -632,6 +672,36 @@ export async function createGiverQuestFromApi(payload: CreateGiverQuestApiPayloa
   const response = await postJson<CreateGiverQuestApiPayload, ApiEnvelope<ApiGiverQuest>>(
     GlobalEndpoint().giverQuest.create,
     payload,
+  );
+  return {
+    ...response.data,
+    id: normalizeGiverQuestId(response.data),
+  };
+}
+
+export async function updateGiverQuestDraftFromApi(
+  questId: string,
+  payload: CreateGiverQuestApiPayload,
+): Promise<ApiGiverQuest> {
+  const response = await requestJson<ApiEnvelope<ApiGiverQuest>>(
+    GlobalEndpoint().giverQuest.update(questId),
+    {
+      method: "PUT",
+      body: payload,
+    },
+  );
+  return {
+    ...response.data,
+    id: normalizeGiverQuestId(response.data),
+  };
+}
+
+export async function deleteGiverQuestDraftFromApi(questId: string): Promise<DeleteGiverQuestApiResponse> {
+  const response = await requestJson<ApiEnvelope<DeleteGiverQuestApiResponse>>(
+    GlobalEndpoint().giverQuest.remove(questId),
+    {
+      method: "DELETE",
+    },
   );
   return response.data;
 }

@@ -61,6 +61,9 @@ type ApiRunnerAssignment = {
   assignment_status?: string;
   started_at?: string | null;
   finished_at?: string | null;
+  escrow?: {
+    escrow_state?: string;
+  };
   quest?: ApiQuest;
 };
 
@@ -87,7 +90,21 @@ function formatDate(value?: string | null): string {
   return Number.isFinite(date.getTime()) ? date.toLocaleString("id-ID") : "Baru saja";
 }
 
-function normalizeRunnerEscrow(status?: string): RunnerActiveQuest["escrowState"] {
+function normalizeRunnerEscrow(
+  status?: string,
+  escrowStatus?: string,
+): RunnerActiveQuest["escrowState"] {
+  switch ((escrowStatus ?? "").toLowerCase()) {
+    case "in_progress":
+      return "IN_PROGRESS";
+    case "pending":
+      return "PENDING_CONFIRMATION";
+    case "released":
+      return "RELEASED";
+    default:
+      break;
+  }
+
   switch ((status ?? "").toLowerCase()) {
     case "active":
     case "in_progress":
@@ -103,7 +120,14 @@ function normalizeRunnerEscrow(status?: string): RunnerActiveQuest["escrowState"
   }
 }
 
-function normalizeRunnerStatus(status?: string): RunnerActiveQuest["status"] {
+function normalizeRunnerStatus(
+  status?: string,
+  escrowStatus?: string,
+): RunnerActiveQuest["status"] {
+  if ((escrowStatus ?? "").toLowerCase() === "released") {
+    return "COMPLETED";
+  }
+
   switch ((status ?? "").toLowerCase()) {
     case "active":
     case "in_progress":
@@ -152,17 +176,19 @@ export function mapRunnerQuestFeedFromApi(quest: ApiQuest): RunnerQuestFeedItem 
 
 function mapRunnerActiveQuestFromApi(item: ApiRunnerAssignment): RunnerActiveQuest {
   const quest = item.quest ?? { id: "unknown", title: "Quest aktif" };
+  const lifecycleStatus = item.assignment_status || quest.status;
+  const escrowStatus = item.escrow?.escrow_state;
   return {
     id: quest.id,
     questTitle: quest.title || "Quest aktif",
     giverName: quest.giver?.fullname || quest.giver?.username || "Verified Giver",
-    escrowState: normalizeRunnerEscrow(item.assignment_status || quest.status),
-    status: normalizeRunnerStatus(item.assignment_status || quest.status),
+    escrowState: normalizeRunnerEscrow(lifecycleStatus, escrowStatus),
+    status: normalizeRunnerStatus(lifecycleStatus, escrowStatus),
     reward: quest.reward_display || formatCurrency(quest.reward_amount),
     locationAddress: quest.location?.full_address || quest.location?.label || "Lokasi quest belum tersedia",
     workStartedAt: item.started_at ? formatDate(item.started_at) : null,
     workFinishedAt: item.finished_at ? formatDate(item.finished_at) : null,
-    autoReleaseHoursLeft: item.assignment_status === "finished" ? 24 : 0,
+    autoReleaseHoursLeft: item.assignment_status === "finished" && escrowStatus !== "released" ? 24 : 0,
     ppGain: "+0 PP",
   };
 }

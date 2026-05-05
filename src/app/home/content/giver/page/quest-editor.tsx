@@ -2,12 +2,21 @@ import { ArrowLeftIcon } from "../../../home.icons";
 import { cn, Surface } from "../../../home.ui";
 import FadeContent from "../../../../../Animation/Fade";
 import { useQuestEditorVM, formatRupiah } from "../giver";
+import type { GiverDraftQuest } from "../giver";
 import type {
   EditorQuestType as QuestType,
   EditorStep,
 } from "../giver.service";
 
-export function QuestEditor({ onBack }: { onBack: () => void }) {
+export function QuestEditor({
+  onBack,
+  draft,
+  onPublished,
+}: {
+  onBack: () => void;
+  draft?: GiverDraftQuest;
+  onPublished?: () => void;
+}) {
   const {
     step,
     setStep,
@@ -48,11 +57,12 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
     canProceedStep1,
     canProceedStep2,
     canBroadcast,
+    isEditingDraft,
     skillTags: SKILL_TAGS,
     createDraftQuest,
     lockEscrow,
     publishQuest,
-  } = useQuestEditorVM();
+  } = useQuestEditorVM(draft, onPublished);
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -505,7 +515,13 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
                     onClick={createDraftQuest}
                     className="btn h-11 flex-1 rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95"
                   >
-                    {isSubmitting ? "Membuat Draft..." : "Buat Draft →"}
+                    {isSubmitting
+                      ? isEditingDraft
+                        ? "Mengupdate Draft..."
+                        : "Membuat Draft..."
+                      : isEditingDraft
+                        ? "Update Draft →"
+                        : "Buat Draft →"}
                   </button>
                 </div>
               </div>
@@ -694,7 +710,7 @@ export function QuestEditor({ onBack }: { onBack: () => void }) {
 
                 <button
                   type="button"
-                  disabled={!canBroadcast}
+                  disabled={!canBroadcast || isSubmitting}
                   onClick={publishQuest}
                   className="btn h-12 w-full rounded-[10px] border-none bg-linear-to-r from-[#38BDF8] to-[#A046FF] text-white font-bold shadow-lg shadow-[#38BDF8]/20 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 >

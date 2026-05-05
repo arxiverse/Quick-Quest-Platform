@@ -193,7 +193,14 @@ export function createInitialRunnerWorkState(
   quests: RunnerActiveQuest[],
 ): RunnerWorkStateMap {
   return Object.fromEntries(
-    quests.map((quest) => [quest.id, quest.workStartedAt ? "started" : "idle"]),
+    quests.map((quest) => [
+      quest.id,
+      quest.workFinishedAt || quest.escrowState === "PENDING_CONFIRMATION" || quest.escrowState === "RELEASED"
+        ? "finished"
+        : quest.workStartedAt
+          ? "started"
+          : "idle",
+    ]),
   ) as RunnerWorkStateMap;
 }
 

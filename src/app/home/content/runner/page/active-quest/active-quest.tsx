@@ -83,6 +83,8 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
           const state = workState[quest.id];
           const secs = countdown[quest.id];
           const urgency = resolveRunnerAutoReleaseUrgency(secs);
+          const isPendingVerification = state === "finished" && quest.escrowState === "PENDING_CONFIRMATION";
+          const isEscrowReleased = quest.escrowState === "RELEASED";
           const escrowIndex = resolveRunnerEscrowFlowIndex(
             vm.escrowFlow,
             quest.escrowState,
@@ -193,13 +195,20 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
                     finishRunnerActiveQuestLive(quest.id)
                       .then(() => {
                         setWorkState((prev) => ({ ...prev, [quest.id]: "finished" }));
-                        // Trigger rating modal — runner rates the giver
-                        setRatingTarget({
-                          name: quest.giverName,
-                          role: "giver",
-                          questTitle: quest.questTitle,
-                          questId: quest.id,
-                        });
+                        setQuests((prev) =>
+                          prev.map((item) =>
+                            item.id === quest.id
+                              ? {
+                                  ...item,
+                                  escrowState: "PENDING_CONFIRMATION",
+                                  status: "PENDING_CONFIRMATION",
+                                  workFinishedAt: new Date().toLocaleString("id-ID"),
+                                  autoReleaseHoursLeft: 24,
+                                }
+                              : item,
+                          ),
+                        );
+                        setCountdown((prev) => ({ ...prev, [quest.id]: 24 * 3600 }));
                       })
                       .catch((error) =>
                         setErrorMessage(error instanceof Error ? error.message : "Gagal selesai kerja."),
@@ -208,15 +217,38 @@ export function RunnerActiveQuestPage({ onBack }: { onBack: () => void }) {
                   }}
                   className="btn h-10 min-h-10 rounded-[9px] border-none bg-success text-success-content text-xs font-bold disabled:opacity-40"
                 >
-                  {actionQuestId === quest.id ? "Memproses..." : "Selesai Kerja"}
+                  {actionQuestId === quest.id
+                    ? "Memproses..."
+                    : isPendingVerification
+                      ? "Pending Verifikasi"
+                      : isEscrowReleased
+                        ? "Escrow Released"
+                        : "Selesai Kerja"}
                 </button>
               </div>
+
+              {isEscrowReleased ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRatingTarget({
+                      name: quest.giverName,
+                      role: "giver",
+                      questTitle: quest.questTitle,
+                      questId: quest.id,
+                    })
+                  }
+                  className="btn mt-3 h-10 min-h-10 w-full rounded-[9px] border-none bg-primary text-xs font-bold text-primary-content"
+                >
+                  Beri Rating ke Giver
+                </button>
+              ) : null}
             </Surface>
           );
         })}
       </div>
 
-      {/* Rating Modal — muncul setelah runner selesai kerja */}
+      {/* Rating Modal — muncul setelah escrow released */}
       {ratingTarget && (
         <RatingModal
           isOpen={true}

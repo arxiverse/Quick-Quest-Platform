@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   GIVER_SUBVIEW_STORAGE_KEY,
   createGiverQuestFromApi,
+  deleteGiverQuestDraftFromApi,
   acceptGiverAssignmentFromApi,
   disputeGiverAssignmentFromApi,
   fetchGiverQuestsFromApi,
@@ -22,6 +23,7 @@ import {
   lockGiverQuestEscrowFromApi,
   publishGiverQuestFromApi,
   requestGiverAssignmentRevisionFromApi,
+  updateGiverQuestDraftFromApi,
   type ApiGiverAssignment,
   type EditorQuestType,
   type EditorStep,
@@ -42,10 +44,17 @@ export type CandidateSort = "MATCH" | "DISTANCE" | "ETA";
 export type GiverBroadcastQuest = {
   id: string;
   title: string;
+  description?: string;
+  category?: string;
   status: GiverBroadcastStatus;
+  lifecycleStatus?: string;
+  isPrivateDraft?: boolean;
   mode: GiverQuestMode;
+  modeValue?: "solo" | "group";
   skillTag: string;
+  skillTags?: string[];
   wageBand: string;
+  rewardAmount?: number;
   slotFilled: number;
   slotTotal: number;
   baseRadiusKm: number;
@@ -53,9 +62,12 @@ export type GiverBroadcastQuest = {
   elapsedSeedSeconds: number;
   deadline: string;
   location: string;
+  fullAddress?: string;
   estimatedCandidates: number;
   escrowState: "UNPAID" | "LOCKED" | "IN_PROGRESS" | "PENDING_CONFIRMATION" | "RELEASED" | "DISPUTED" | "REFUND";
 };
+
+export type GiverDraftQuest = GiverBroadcastQuest;
 
 export type GiverCandidateStatus = "Ready" | "On Quest" | "Standby";
 
@@ -107,7 +119,7 @@ export type GiverPostQuestInsight = {
 };
 
 export type GiverSubView =
-  | { view: "QuestEditor" }
+  | { view: "QuestEditor"; payload?: { draft?: GiverDraftQuest } }
   | { view: "CandidateReview"; payload: { id: string } };
 
 export type GiverRadiusRuntime = {
@@ -303,6 +315,7 @@ export function useGiverDashboardVM() {
   const [quests, setQuests] = useState<GiverBroadcastQuest[]>(giverBroadcastQuests);
   const [assignmentsByQuest, setAssignmentsByQuest] = useState<Record<string, GiverAssignmentAuditItem[]>>({});
   const [auditActionId, setAuditActionId] = useState("");
+  const [draftActionId, setDraftActionId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -323,8 +336,15 @@ export function useGiverDashboardVM() {
       const resolvedQuests = nextQuests.length > 0 ? nextQuests : giverBroadcastQuests;
       setQuests(resolvedQuests);
 
+      const auditableQuests = resolvedQuests.filter(
+        (quest) =>
+          !quest.isPrivateDraft &&
+          quest.escrowState !== "RELEASED" &&
+          quest.escrowState !== "DISPUTED" &&
+          quest.escrowState !== "REFUND",
+      );
       const assignmentPairs = await Promise.all(
-        resolvedQuests.map(async (quest) => {
+        auditableQuests.map(async (quest) => {
           try {
             const assignments = await fetchGiverQuestAssignmentsFromApi(quest.id);
             return [quest.id, assignments.map(mapAssignment)] as const;
@@ -341,6 +361,19 @@ export function useGiverDashboardVM() {
       setIsLoading(false);
     }
   }, []);
+
+  const deleteDraft = useCallback(async (questId: string) => {
+    setDraftActionId(questId);
+    setErrorMessage("");
+    try {
+      await deleteGiverQuestDraftFromApi(questId);
+      await refresh();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal hapus draft quest.");
+    } finally {
+      setDraftActionId("");
+    }
+  }, [refresh]);
 
   const auditAssignment = useCallback(async (
     assignmentId: string,
@@ -370,11 +403,15 @@ export function useGiverDashboardVM() {
 
   return {
     quests,
+    draftQuests: quests.filter((quest) => quest.isPrivateDraft),
+    publishedQuests: quests.filter((quest) => !quest.isPrivateDraft),
     assignmentsByQuest,
     auditActionId,
+    draftActionId,
     isLoading,
     errorMessage,
     refresh,
+    deleteDraft,
     auditAssignment,
   };
 }
@@ -389,23 +426,38 @@ export function parseRupiah(val: string): number {
   return parseInt(val.replace(/\./g, "").replace(/,/g, ""), 10) || 0;
 }
 
-export function useQuestEditorVM() {
+export function useQuestEditorVM(initialDraft?: GiverDraftQuest, onPublished?: () => void) {
+  const initialReward = initialDraft?.rewardAmount
+    ? formatRupiah(String(initialDraft.rewardAmount))
+    : "";
   const [step, setStep] = useState<EditorStep>(1);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Event Organizer");
-  const [locationAddress, setLocationAddress] = useState("Jakarta Selatan (GPS Auto)");
-  const [questType, setQuestType] = useState<EditorQuestType>("SOLO");
-  const [slotCount, setSlotCount] = useState(1);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [upahMin, setUpahMin] = useState("");
-  const [upahMax, setUpahMax] = useState("");
+  const [title, setTitle] = useState(initialDraft?.title ?? "");
+  const [description, setDescription] = useState(initialDraft?.description ?? "");
+  const [category, setCategory] = useState(initialDraft?.category ?? "Event Organizer");
+  const [locationAddress, setLocationAddress] = useState(
+    initialDraft?.fullAddress || initialDraft?.location || "Jakarta Selatan (GPS Auto)",
+  );
+  const [questType, setQuestType] = useState<EditorQuestType>(
+    initialDraft?.modeValue === "group" || initialDraft?.mode === "Ber-Kelompok" ? "KELOMPOK" : "SOLO",
+  );
+  const [slotCount, setSlotCount] = useState(Math.max(1, initialDraft?.slotTotal ?? 1));
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(
+    initialDraft?.skillTags?.length
+      ? initialDraft.skillTags
+      : initialDraft?.skillTag
+        ? initialDraft.skillTag.split(" + ").filter(Boolean)
+        : [],
+  );
+  const [upahMin, setUpahMin] = useState(initialReward);
+  const [upahMax, setUpahMax] = useState(initialReward);
   const [baseRadius, setBaseRadius] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState("virtual_account");
-  const [escrowLocked, setEscrowLocked] = useState(false);
-  const [createdQuestId, setCreatedQuestId] = useState("");
+  const [escrowLocked, setEscrowLocked] = useState(initialDraft?.escrowState === "LOCKED");
+  const [createdQuestId, setCreatedQuestId] = useState(initialDraft?.id ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState(
+    initialDraft ? "Draft privat dimuat. Edit lalu update sebelum broadcast." : "",
+  );
   const [errorMessage, setErrorMessage] = useState("");
 
   const upahMinNum = parseRupiah(upahMin);
@@ -431,26 +483,38 @@ export function useQuestEditorVM() {
     upahMaxNum >= upahMinNum;
   const canProceedStep2 = true;
   const canBroadcast = escrowLocked;
+  const isEditingDraft = Boolean(initialDraft?.id);
+
+  function buildDraftPayload() {
+    return {
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      mode: questType === "KELOMPOK" ? "group" as const : "solo" as const,
+      skill_tags: selectedSkills,
+      reward_amount: upahMaxNum,
+      reward_currency: "IDR" as const,
+      max_runner: questType === "KELOMPOK" ? slotCount : 1,
+      full_address: locationAddress.trim(),
+      base_radius_km: baseRadius,
+    };
+  }
 
   async function createDraftQuest() {
     setIsSubmitting(true);
     setErrorMessage("");
     setStatusMessage("");
     try {
-      const quest = await createGiverQuestFromApi({
-        title: title.trim(),
-        description: description.trim(),
-        category,
-        mode: questType === "KELOMPOK" ? "group" : "solo",
-        skill_tags: selectedSkills,
-        reward_amount: upahMaxNum,
-        reward_currency: "IDR",
-        max_runner: questType === "KELOMPOK" ? slotCount : 1,
-        full_address: locationAddress.trim(),
-        base_radius_km: baseRadius,
-      });
-      setCreatedQuestId(quest.id);
-      setStatusMessage("Draft quest berhasil dibuat. Lanjut deposit escrow.");
+      const payload = buildDraftPayload();
+      const quest = createdQuestId
+        ? await updateGiverQuestDraftFromApi(createdQuestId, payload)
+        : await createGiverQuestFromApi(payload);
+      setCreatedQuestId(quest.id ?? createdQuestId);
+      setStatusMessage(
+        createdQuestId
+          ? "Draft quest berhasil diperbarui. Lanjut deposit atau broadcast kalau escrow sudah locked."
+          : "Draft quest berhasil dibuat. Lanjut deposit escrow.",
+      );
       setStep(3);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Gagal membuat draft quest.");
@@ -484,6 +548,7 @@ export function useQuestEditorVM() {
     try {
       await publishGiverQuestFromApi(createdQuestId);
       setStatusMessage("Quest berhasil dibroadcast ke feed runner.");
+      onPublished?.();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Gagal publish quest.");
     } finally {
@@ -532,6 +597,7 @@ export function useQuestEditorVM() {
     canProceedStep1,
     canProceedStep2,
     canBroadcast,
+    isEditingDraft,
     skillTags: QQM_SKILL_TAGS,
     platformFeePercent: QQM_PLATFORM_FEE_PERCENT,
     createDraftQuest,
